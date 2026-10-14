@@ -525,6 +525,63 @@ const MACROCATEGORIAS = [{
     id: "compulsao_aval",
     label: "Rastreamento e Avaliação"
   }]
+}, {
+  id: "macro_autoconhecimento",
+  icone: "🔍",
+  label: "Autoconhecimento",
+  cor: "#0369a1",
+  bg: "#e0f2fe",
+  subs: [{
+    id: "padroes_comportamento",
+    label: "Padrões de Comportamento"
+  }, {
+    id: "valores_identidade",
+    label: "Valores e Identidade"
+  }, {
+    id: "historia_pessoal",
+    label: "História e Narrativa Pessoal"
+  }, {
+    id: "crencas_centrais",
+    label: "Crenças Centrais"
+  }]
+}, {
+  id: "macro_autocuidado",
+  icone: "🌸",
+  label: "Autocuidado e Autoestima",
+  cor: "#059669",
+  bg: "#d1fae5",
+  subs: [{
+    id: "autoestima_fab",
+    label: "Autoestima"
+  }, {
+    id: "autocompaixao",
+    label: "Autocompaixão"
+  }, {
+    id: "limites_saudaveis",
+    label: "Limites Saudáveis"
+  }, {
+    id: "praticas_bem_estar",
+    label: "Práticas de Bem-Estar"
+  }]
+}, {
+  id: "macro_produtividade",
+  icone: "⚡",
+  label: "Produtividade",
+  cor: "#b45309",
+  bg: "#fef3c7",
+  subs: [{
+    id: "foco_concentracao",
+    label: "Foco e Concentração"
+  }, {
+    id: "gestao_tempo",
+    label: "Gestão do Tempo"
+  }, {
+    id: "metas_objetivos",
+    label: "Metas e Objetivos"
+  }, {
+    id: "procrastinacao_prod",
+    label: "Procrastinação"
+  }]
 }];
 
 // Todas as subcategorias num array plano (para selects e filtros)
@@ -14875,6 +14932,179 @@ Responda APENAS em JSON válido, sem markdown, neste formato:
     size: 13
   }), " Ouvir / Assistir")))))));
 }
+// ── Carousel para fábulas com imagens ──────────────────────────────
+function FabulaCarousel({fabula, cat, pacienteId, onBack}) {
+  const [idx, setIdx] = useState(0);
+  const [respostas, setRespostas] = useState({});
+  const [salvando, setSalvando] = useState(false);
+  const [salvo, setSalvo] = useState(false);
+  const paginas = fabula.paginas || [];
+  const perguntas = fabula.perguntas || [];
+  const total = paginas.length;
+
+  // Swipe touch
+  const touchStart = React.useRef(null);
+  function onTouchStart(e) { touchStart.current = e.touches[0].clientX; }
+  function onTouchEnd(e) {
+    if (touchStart.current === null) return;
+    const diff = touchStart.current - e.changedTouches[0].clientX;
+    if (diff > 50 && idx < total - 1) setIdx(i => i + 1);
+    if (diff < -50 && idx > 0) setIdx(i => i - 1);
+    touchStart.current = null;
+  }
+
+  async function salvarReflexoes() {
+    if (!pacienteId) return;
+    setSalvando(true);
+    try {
+      await db.collection("clinica_reflexoes").add({
+        pacienteId,
+        tipo: "fabula",
+        fabulaId: fabula.id,
+        titulo: fabula.titulo,
+        respostas,
+        criadoEm: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      setSalvo(true);
+      setTimeout(() => setSalvo(false), 3000);
+    } catch(e) { alert("Erro ao salvar: " + e.message); }
+    setSalvando(false);
+  }
+
+  return React.createElement("div", null,
+    // Botão voltar
+    React.createElement("button", {
+      className: "btn btn-ghost",
+      style: {marginBottom: 16, padding: "8px 12px"},
+      onClick: onBack
+    }, React.createElement(Icon, {name:"arrow-left", size:16}), " Todas as fábulas"),
+
+    // Header da fábula
+    React.createElement("div", {
+      className: "card",
+      style: {marginBottom: 16, background: cat.cor, color: "white"}
+    },
+      React.createElement("div", {style: {textAlign:"center", padding:"8px 0 16px"}},
+        React.createElement("div", {style:{fontSize:52, marginBottom:12}}, fabula.emoji),
+        React.createElement("div", {style:{fontFamily:"var(--font-display)", fontSize:22, fontWeight:600, marginBottom:8}}, fabula.titulo),
+        React.createElement("div", {style:{fontSize:13, fontStyle:"italic", opacity:0.9}}, "\"", fabula.moral, "\""),
+        React.createElement("div", {style:{marginTop:12, fontSize:12, opacity:0.75}},
+          total, " painéis · ", perguntas.length, " reflexões")
+      )
+    ),
+
+    // Carousel de imagens
+    React.createElement("div", {
+      style: {position:"relative", marginBottom:16, touchAction:"pan-y"},
+      onTouchStart, onTouchEnd
+    },
+      // Imagem
+      React.createElement("div", {style:{borderRadius:12, overflow:"hidden", background:"#000", boxShadow:"0 4px 20px rgba(0,0,0,0.15)"}},
+        React.createElement("img", {
+          src: paginas[idx],
+          alt: "Painel " + (idx+1),
+          style: {width:"100%", display:"block", maxHeight:480, objectFit:"contain"}
+        })
+      ),
+      // Seta esquerda
+      idx > 0 && React.createElement("button", {
+        onClick: () => setIdx(i => i - 1),
+        style: {position:"absolute", left:8, top:"50%", transform:"translateY(-50%)",
+          background:"rgba(255,255,255,0.9)", border:"none", borderRadius:"50%",
+          width:40, height:40, cursor:"pointer", display:"flex", alignItems:"center",
+          justifyContent:"center", boxShadow:"0 2px 8px rgba(0,0,0,0.2)", zIndex:2}
+      }, React.createElement(Icon, {name:"chevron-left", size:20})),
+      // Seta direita
+      idx < total - 1 && React.createElement("button", {
+        onClick: () => setIdx(i => i + 1),
+        style: {position:"absolute", right:8, top:"50%", transform:"translateY(-50%)",
+          background:"rgba(255,255,255,0.9)", border:"none", borderRadius:"50%",
+          width:40, height:40, cursor:"pointer", display:"flex", alignItems:"center",
+          justifyContent:"center", boxShadow:"0 2px 8px rgba(0,0,0,0.2)", zIndex:2}
+      }, React.createElement(Icon, {name:"chevron-right", size:20})),
+
+      // Dots
+      React.createElement("div", {style:{display:"flex", justifyContent:"center", gap:6, marginTop:10}},
+        paginas.map((_, i) => React.createElement("div", {
+          key: i,
+          onClick: () => setIdx(i),
+          style: {
+            width: i === idx ? 20 : 8, height:8, borderRadius:4,
+            background: i === idx ? cat.cor : "#ccc",
+            cursor:"pointer", transition:"all 0.2s"
+          }
+        }))
+      ),
+
+      // Contador
+      React.createElement("div", {style:{textAlign:"center", marginTop:6, fontSize:12, color:"var(--text-muted)"}},
+        idx + 1, " / ", total
+      )
+    ),
+
+    // Navegação por botões (próximo / anterior)
+    React.createElement("div", {style:{display:"flex", gap:8, marginBottom:20}},
+      React.createElement("button", {
+        className:"btn btn-outline",
+        style:{flex:1, opacity: idx===0 ? 0.3 : 1},
+        disabled: idx===0,
+        onClick: () => setIdx(i => i - 1)
+      }, React.createElement(Icon, {name:"chevron-left", size:16}), " Anterior"),
+      React.createElement("button", {
+        className:"btn btn-primary",
+        style:{flex:1, opacity: idx===total-1 ? 0.3 : 1},
+        disabled: idx===total-1,
+        onClick: () => setIdx(i => i + 1)
+      }, "Próximo ", React.createElement(Icon, {name:"chevron-right", size:16}))
+    ),
+
+    // Perguntas de reflexão — só aparecem após o último painel
+    idx === total - 1 && perguntas.length > 0 && React.createElement("div", {
+      className:"card",
+      style:{border:"1.5px solid " + cat.cor + "30", background:cat.bg, marginBottom:16}
+    },
+      React.createElement("div", {style:{fontWeight:700, marginBottom:14, display:"flex", alignItems:"center", gap:8, color:cat.cor}},
+        React.createElement(Icon, {name:"help-circle", size:16}), " Perguntas de Reflexão"),
+      perguntas.map((p, i) => React.createElement("div", {
+        key: i,
+        style:{marginBottom: i < perguntas.length-1 ? 20 : 0, paddingBottom: i < perguntas.length-1 ? 20 : 0,
+          borderBottom: i < perguntas.length-1 ? "1px solid " + cat.cor + "20" : "none"}
+      },
+        // Número + pergunta
+        React.createElement("div", {style:{display:"flex", gap:10, marginBottom:10}},
+          React.createElement("div", {style:{
+            width:26, height:26, borderRadius:"50%", background:cat.cor, color:"white",
+            display:"flex", alignItems:"center", justifyContent:"center",
+            fontSize:12, fontWeight:700, flexShrink:0
+          }}, i+1),
+          React.createElement("p", {style:{fontSize:13, lineHeight:1.6, color:"var(--gray-700)", margin:0}}, p)
+        ),
+        // Campo de resposta com voz
+        React.createElement(TextAreaVoz, {
+          placeholder: "Escreva sua reflexão aqui...",
+          value: respostas[i] || "",
+          onChange: v => setRespostas(r => ({...r, [i]: v})),
+          rows: 3
+        })
+      )),
+
+      // Botão salvar
+      React.createElement("button", {
+        className: "btn btn-primary",
+        style:{marginTop:16, width:"100%"},
+        onClick: salvarReflexoes,
+        disabled: salvando || !pacienteId
+      },
+        salvo
+          ? React.createElement("span", null, React.createElement(Icon, {name:"check", size:15}), " Reflexões salvas!")
+          : salvando
+            ? React.createElement(Spinner, null)
+            : React.createElement("span", null, React.createElement(Icon, {name:"save", size:15}), " Salvar reflexões")
+      )
+    )
+  );
+}
+
 function AbaFabulas() {
   const [fabulas, setFabulas] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -14950,6 +15180,16 @@ function AbaFabulas() {
       cor: "#7c3aed",
       bg: "#ede9fe"
     };
+    // Fábula tipo carousel (imagens)
+    if (fabulaAberta.tipo === "carousel") {
+      return /*#__PURE__*/React.createElement(FabulaCarousel, {
+        fabula: fabulaAberta,
+        cat: cat,
+        pacienteId: null,
+        onBack: () => setFabulaAberta(null)
+      });
+    }
+    // Fábula tipo texto (padrão)
     return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("button", {
       className: "btn btn-ghost",
       style: {
