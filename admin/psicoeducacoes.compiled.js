@@ -2410,52 +2410,6 @@ function Psico7Distorcoes({
     }
   }, "Dra. Lucia Kratz · Psicóloga · CRP 09/20590"));
 }
-
-// Mapa legado → macro para fábulas
-const FAB_LEGADO_MACRO = {
-  "resiliencia": "macro_habitos",
-  "resiliência": "macro_habitos",
-  "crescimento": "macro_habitos",
-  "mindfulness": "macro_habitos",
-  "perspectiva": "macro_habitos",
-  "habitos": "macro_habitos",
-  "esperanca": "macro_humor",
-  "esperança": "macro_humor",
-  "autoconfianca": "macro_humor",
-  "autoconfiança": "macro_humor",
-  "autoestima": "macro_humor",
-  "emocoes": "macro_humor",
-  "expressão emocional": "macro_humor",
-  "expressao emocional": "macro_humor",
-  "regulação emocional": "macro_humor",
-  "regulacao emocional": "macro_humor",
-  "coragem": "macro_humor",
-  "perdao": "macro_humor",
-  "perdão": "macro_humor",
-  "autoconhecimento": "macro_ansiedade",
-  "ansiedade": "macro_ansiedade",
-  "tcc": "macro_ansiedade",
-  "relacionamentos": "macro_relacionamentos",
-  "casais": "macro_casais",
-  "corpo": "macro_habitos",
-  "alimentacao": "macro_habitos",
-  "saude_mental": "macro_habitos",
-  "compulsao_ciclo": "macro_compulsao",
-  "compulsao_habitos": "macro_compulsao",
-  "compulsao_emocional": "macro_compulsao",
-  "compulsao_vinculos": "macro_compulsao",
-  "compulsao_aval": "macro_compulsao",
-  "compulsao": "macro_compulsao",
-  // já migradas
-  "macro_ansiedade": "macro_ansiedade",
-  "macro_humor": "macro_humor",
-  "macro_habitos": "macro_habitos",
-  "macro_relacionamentos": "macro_relacionamentos",
-  "macro_casais": "macro_casais",
-  "macro_corpo": "macro_habitos",
-  "macro_compulsao": "macro_compulsao"
-};
-
 // Mapa de visualizações
 
 // ═══════════════════════════════════════════════════════════════════
@@ -15052,32 +15006,6 @@ const CATS_PSICOEDUCACAO = {
 };
 
 // Mapa legado → macro para psicoeducação (fora do componente para evitar hoisting)
-const PSICO_LEGADO_MACRO = {
-  tcc: "macro_ansiedade",
-  ansiedade: "macro_ansiedade",
-  esquema: "macro_ansiedade",
-  emocoes: "macro_humor",
-  autocuidado: "macro_habitos",
-  relacionamentos: "macro_relacionamentos",
-  casais: "macro_casais",
-  corpo: "macro_corpo",
-  outros: "macro_ansiedade",
-  autoestima: "macro_humor",
-  mindfulness: "macro_habitos",
-  trauma: "macro_ansiedade",
-  depressao: "macro_humor",
-  habitos: "macro_habitos",
-  // novas macrocategorias já passam direto
-  macro_ansiedade: "macro_ansiedade",
-  macro_humor: "macro_humor",
-  macro_habitos: "macro_habitos",
-  macro_relacionamentos: "macro_relacionamentos",
-  macro_casais: "macro_casais",
-  macro_corpo: "macro_corpo",
-  macro_compulsao: "macro_compulsao",
-  compulsao_sexual: "macro_compulsao",
-  compulsao: "macro_compulsao"
-};
 function AbaPsicoeducacao() {
   const [itens, setItens] = useState([]);
   const [loading, setLoading] = useState(true);
