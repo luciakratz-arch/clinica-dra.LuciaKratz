@@ -1016,6 +1016,23 @@ function RecursosTerapeuticos({ user }) {
     "analise-cadeia":             "macro_ansiedade",
     "rastreamento-compulsao-sexual": "macro_compulsao",
     "baralho-distorcoes":            "macro_ansiedade",
+    // Novas macrocategorias
+    "autoconhecimento_profundo":  "macro_autoconhecimento",
+    "identidade":                 "macro_autoconhecimento",
+    "valores":                    "macro_autoconhecimento",
+    "proposito_vida":             "macro_autoconhecimento",
+    "macro_autoconhecimento":     "macro_autoconhecimento",
+    "autoestima_profunda":        "macro_autocuidado",
+    "autocompassao":              "macro_autocuidado",
+    "limites_saudaveis":          "macro_autocuidado",
+    "cuidado_pessoal":            "macro_autocuidado",
+    "macro_autocuidado":          "macro_autocuidado",
+    "produtividade_pessoal":      "macro_produtividade",
+    "gestao_tempo":               "macro_produtividade",
+    "foco":                       "macro_produtividade",
+    "metas_pessoais":             "macro_produtividade",
+    "organizacao":                "macro_produtividade",
+    "macro_produtividade":        "macro_produtividade",
   };
 
   const filtrados = abaRecursos.filter(r=>{
@@ -1051,25 +1068,39 @@ function RecursosTerapeuticos({ user }) {
     ...MACROCATEGORIAS.map(m=>m.id), // inclui macro_humor, macro_habitos etc.
   ]);
   const porCategoria = [];
+  const jaExibidos = new Set();
+
+  // Função para determinar a macrocategoria principal de um recurso
+  function getMacroPrincipal(r){
+    if(MACROCATEGORIAS.some(m=>m.id===r.categoria)) return r.categoria;
+    if(LEGADO_PARA_MACRO[r.categoria] && r.categoria!=="outro") return LEGADO_PARA_MACRO[r.categoria];
+    if(r.formularioKey && LEGADO_PARA_MACRO[r.formularioKey]) return LEGADO_PARA_MACRO[r.formularioKey];
+    // Verifica subcategorias
+    for(const m of MACROCATEGORIAS){
+      if(m.subs.some(s=>s.id===r.categoria)) return m.id;
+    }
+    return null;
+  }
+
   // Macrocategorias (agrupa todas as subcategorias)
   MACROCATEGORIAS.forEach(m=>{
-    const subIds = new Set(m.subs.map(s=>s.id));
-    const legadoIds2 = new Set(Object.entries(LEGADO_PARA_MACRO).filter(([,mid])=>mid===m.id).map(([k])=>k));
     const itens = filtrados.filter(r=>{
-      const macroInf = (r.categoria!=="outro"&&LEGADO_PARA_MACRO[r.categoria])||LEGADO_PARA_MACRO[r.formularioKey];
-      return r.categoria===m.id||subIds.has(r.categoria)||legadoIds2.has(r.categoria)||legadoIds2.has(r.formularioKey)||macroInf===m.id;
+      if(jaExibidos.has(r.id)) return false;
+      return getMacroPrincipal(r)===m.id;
     });
+    itens.forEach(r=>jaExibidos.add(r.id));
     if(itens.length>0) porCategoria.push({...m, itens});
   });
   // Musicoterapia e Avaliação separados
   ["musicoterapia","avaliacao"].forEach(cid=>{
     const cat = CATEGORIAS_LEGADO.find(c=>c.id===cid);
     if(!cat) return;
-    const itens = filtrados.filter(r=>r.categoria===cid);
+    const itens = filtrados.filter(r=>!jaExibidos.has(r.id)&&r.categoria===cid);
+    itens.forEach(r=>jaExibidos.add(r.id));
     if(itens.length>0) porCategoria.push({...cat, itens});
   });
-  // Órfãos (categorias não reconhecidas)
-  const orfaos = filtrados.filter(r=>!todasCatsConhecidas.has(r.categoria));
+  // Órfãos (itens que não foram exibidos em nenhuma categoria)
+  const orfaos = filtrados.filter(r=>!jaExibidos.has(r.id));
   if(orfaos.length>0) porCategoria.push({
     id:"_orfaos", label:"Sem Categoria", cor:"#6b7280", bg:"#f3f4f6", itens:orfaos
   });
@@ -1263,36 +1294,6 @@ function RecursosTerapeuticos({ user }) {
           </div>
         )}
       </div>
-      {/* Card estático — Baralho das Distorções Cognitivas */}
-      {(filtroCateg==="todos"||filtroCateg==="macro_ansiedade")&&abaView==="ferramentas"&&(
-        <div style={{marginBottom:28}}>
-          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14,paddingBottom:8,borderBottom:"1px solid var(--gray-100)"}}>
-            <span style={{fontWeight:700,fontSize:12,color:"#7B00C4",textTransform:"uppercase",letterSpacing:"0.8px"}}>🧠 Ansiedade e Controle dos Pensamentos</span>
-            <span style={{background:"#f3e6ff",color:"#7B00C4",borderRadius:20,padding:"2px 10px",fontSize:12,fontWeight:600}}>Ferramenta Interativa</span>
-          </div>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:14}}>
-            <div style={{background:"white",border:"1.5px solid #7B00C440",borderRadius:14,padding:18,display:"flex",flexDirection:"column",gap:10}}>
-              <div style={{display:"flex",alignItems:"flex-start",gap:8}}>
-                <div style={{width:44,height:44,borderRadius:10,background:"linear-gradient(135deg,#7B00C4,#9b59b6)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>🃏</div>
-                <div style={{flex:1}}>
-                  <div style={{display:"flex",gap:6,marginBottom:4,flexWrap:"wrap"}}>
-                    <span style={{background:"#f3e6ff",color:"#7B00C4",borderRadius:20,padding:"2px 8px",fontSize:10,fontWeight:600,border:"1px solid #7B00C430"}}>INTERATIVA</span>
-                  </div>
-                  <div style={{fontWeight:600,fontSize:14}}>Baralho das Distorções Cognitivas</div>
-                </div>
-              </div>
-              <p style={{fontSize:13,color:"var(--text-muted)",lineHeight:1.5,flex:1}}>Ferramenta interativa para identificar e trabalhar crenças limitantes em 3 categorias: Desvalor, Desamor e Desamparo. Com perguntas socráticas e sessões progressivas.</p>
-              <span style={{fontSize:11,color:"var(--gray-400)",background:"var(--gray-50)",borderRadius:6,padding:"2px 8px",display:"inline-block",width:"fit-content"}}>baralho-distorcoes</span>
-              <div style={{borderTop:"1px solid var(--gray-100)",paddingTop:10}}>
-                <button className="btn btn-outline" style={{fontSize:12,width:"100%",color:"var(--purple)",borderColor:"var(--purple)"}} onClick={()=>setEnviandoRecurso({id:"baralho-distorcoes",titulo:"Baralho das Distorções Cognitivas",formularioKey:"baralho-distorcoes",descricao:"Ferramenta interativa para identificar e trabalhar crenças limitantes em 3 categorias: Desvalor, Desamor e Desamparo."})}>
-                  <Icon name="send" size={13}/> 📲 Enviar para paciente
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {filtrados.length===0?(
         <div className="card" style={{textAlign:"center",padding:48,color:"var(--text-muted)"}}>
           <Icon name="wrench" size={40}/>
