@@ -2027,15 +2027,18 @@ function FerramentaPortal({ recurso, user }){
         {/* Card da página */}
         <div style={{
           background:"linear-gradient(145deg,#4c0094,#7B00C4,#6d28d9)",
-          borderRadius:20,padding:"36px 28px",minHeight:220,marginBottom:20,
+          borderRadius:20,padding:/\.(jpg|jpeg|png|webp|gif)$/i.test(pag)?"8px":"36px 28px",minHeight:220,marginBottom:20,
           boxShadow:"0 8px 32px rgba(123,0,196,0.35)",
-          display:"flex",alignItems:"center",justifyContent:"center"
+          display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden"
         }}>
-          <p style={{
-            fontSize:19,color:"white",lineHeight:1.9,textAlign:"center",
-            fontStyle:"italic",margin:0,
-            textShadow:"0 1px 3px rgba(0,0,0,0.2)"
-          }}>{pag}</p>
+          {/\.(jpg|jpeg|png|webp|gif)$/i.test(pag)
+            ? <img src={pag} alt={"Painel "+(idx+1)} style={{width:"100%",display:"block",borderRadius:14,maxHeight:480,objectFit:"contain"}}/>
+            : <p style={{
+                fontSize:19,color:"white",lineHeight:1.9,textAlign:"center",
+                fontStyle:"italic",margin:0,
+                textShadow:"0 1px 3px rgba(0,0,0,0.2)"
+              }}>{pag}</p>
+          }
         </div>
         {/* Reflexões no último slide */}
         {concluido&&(recurso.perguntas||[]).length>0&&(
