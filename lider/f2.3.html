@@ -296,7 +296,7 @@ function enviarFirestore() {
     wa_destino: document.getElementById('wa-destino').value.trim(),
     timestamp: firebase.firestore.FieldValue.serverTimestamp()
   };
-  firebase.firestore().collection('lider_f2_3').add(data).then(function(){
+  firebase.firestore().collection('lider_f2_3').doc(data.wa_destino.replace(/\D/g,'')||Date.now().toString()).set(data).then(function(){
     mostrarMsg('Atividade do trio salva com sucesso!', 'ok');
   }).catch(function(){
     mostrarMsg('Erro ao salvar. Tente novamente.', 'err');
@@ -372,8 +372,27 @@ window.onload = function() {
   renderBlocos();
 
   var wa = localStorage.getItem('lider_whatsapp');
-  if (wa) { var w = document.getElementById('wa-destino'); if (w) w.value = wa; }
+  if (wa) { var w = document.getElementById('wa-destino'); if (w) w.value = wa; carregarDados(wa.replace(/\D/g,'')); }
+
+  document.getElementById('wa-destino').addEventListener('blur', function(){
+    var v = this.value.replace(/\D/g,'');
+    if(v.length >= 10) carregarDados(v);
+  });
 };
+
+function carregarDados(wa){
+  if(!wa) return;
+  firebase.firestore().collection('lider_f2_3').doc(wa).get().then(function(doc){
+    if(!doc.exists) return;
+    var d = doc.data();
+    if(d.participantes && Array.isArray(d.participantes)){
+      participantes = d.participantes;
+      abaAtiva = 0;
+      renderTabs();
+      renderBlocos();
+    }
+  }).catch(function(){});
+}
 </script>
 </body>
 </html>
