@@ -539,7 +539,7 @@ function salvarFirestore(){
     wa_destino: document.getElementById('wa-destino').value.trim(),
     timestamp: firebase.firestore.FieldValue.serverTimestamp()
   };
-  db.collection('lider_f3_1').add(dados).then(function(){
+  db.collection('lider_f3_1').doc(dados.wa_destino.replace(/\D/g,'')||Date.now().toString()).set(dados).then(function(){
     msg.className='msg ok'; msg.textContent='✅ Atividade do grupo salva com sucesso!';
   }).catch(function(e){
     msg.className='msg err'; msg.textContent='Erro: '+e.message;
@@ -570,8 +570,30 @@ window.onload = function(){
 
   // Recupera WhatsApp salvo
   var wa = localStorage.getItem('lider_whatsapp');
-  if(wa){ var w=document.getElementById('wa-destino'); if(w) w.value=wa; }
+  if(wa){ var w=document.getElementById('wa-destino'); if(w) w.value=wa; carregarDados(wa.replace(/\D/g,'')); }
+
+  document.getElementById('wa-destino').addEventListener('blur', function(){
+    var v = this.value.replace(/\D/g,'');
+    if(v.length >= 10) carregarDados(v);
+  });
 };
+
+function carregarDados(wa){
+  if(!wa) return;
+  var db = firebase.firestore();
+  db.collection('lider_f3_1').doc(wa).get().then(function(doc){
+    if(!doc.exists) return;
+    var d = doc.data();
+    if(d.participantes){
+      try{
+        participantes = typeof d.participantes === 'string' ? JSON.parse(d.participantes) : d.participantes;
+        abaAtiva = 0;
+        renderTabs();
+        renderBlocos();
+      }catch(e){}
+    }
+  }).catch(function(){});
+}
 </script>
 </body>
 </html>
