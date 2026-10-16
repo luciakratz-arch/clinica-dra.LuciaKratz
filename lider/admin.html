@@ -56,6 +56,8 @@ main{max-width:1100px;margin:0 auto;padding:28px 20px}
 .resp-date{font-size:0.78rem;color:#9ca3af;margin-left:auto}
 .btn-expand{background:none;border:1.5px solid #d1fae5;color:#15803d;font-family:'Inter',sans-serif;font-size:0.78rem;font-weight:600;padding:4px 12px;border-radius:20px;cursor:pointer;margin-left:8px;transition:background 0.15s,border-color 0.15s;white-space:nowrap}
 .btn-expand:hover{background:#f0fdf4;border-color:#86efac}
+.btn-wa{display:inline-block;background:#25d366;color:#fff;border:none;font-family:'Inter',sans-serif;font-size:0.78rem;font-weight:600;padding:4px 12px;border-radius:20px;cursor:pointer;margin-left:8px;text-decoration:none;white-space:nowrap;transition:background 0.15s}
+.btn-wa:hover{background:#128c48}
 .card-detail{display:none;margin-top:14px;border-top:1px solid #d1fae5;padding-top:12px}
 .card-detail.open{display:block}
 .detail-row{display:flex;gap:8px;padding:5px 0;border-bottom:1px solid #f3f4f6;font-size:0.83rem}
@@ -301,12 +303,21 @@ function renderVisible(){
       return '<div class="detail-row"><span class="detail-key">'+esc(k)+'</span><span class="detail-val">'+esc(String(r.data[k]||''))+'</span></div>';
     }).join('');
 
+    var waNum = wpp.replace(/\D/g,'');
+    var formSlug = r.col.replace('lider_','').replace('_','.'); // lider_f2_1 → f2.1
+    var linkForm = 'https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/lider/'+formSlug+'.html';
+    var waMsg = encodeURIComponent('Olá '+name+'! Aqui está o link para acessar e revisar suas respostas do formulário '+badgeLabel(r.col)+' do programa Líd@r:\n'+linkForm);
+    var waBtn = waNum
+      ? '<a class="btn-wa" href="https://wa.me/55'+waNum+'?text='+waMsg+'" target="_blank">📲 Enviar link</a>'
+      : '';
+
     return '<div class="response-card" id="rc-'+idx+'">'
       +'<div class="card-header">'
       +'<span class="form-badge '+badgeClass(r.col)+'">'+badgeLabel(r.col)+'</span>'
       +'<span class="resp-name">'+esc(name)+'</span>'
       +(wpp?'<span class="resp-wpp">· '+esc(wpp)+'</span>':'')
       +'<span class="resp-date">'+date+'</span>'
+      +waBtn
       +'<button class="btn-expand" onclick="toggleDetail('+idx+',this)">Ver detalhes ▾</button>'
       +'</div>'
       +'<div class="card-detail" id="cd-'+idx+'">'+detailRows+'</div>'
@@ -352,37 +363,39 @@ function loadAllCollections(){
   var pending = colKeys.length;
   allDocs = [];
 
-  colKeys.forEach(function(col){
-    db.collection(col).orderBy('timestamp','desc').get()
-      .catch(function(){ return db.collection(col).get(); })
-      .then(function(snap){
-        var count = 0;
-        snap.forEach(function(doc){
-          allDocs.push({col:col, id:doc.id, data:doc.data()});
-          count++;
-        });
-        // Update stat card
-        var cnt = document.getElementById('cnt-'+col);
-        if(cnt) cnt.textContent = count;
-        pending--;
-        if(pending === 0){
-          // Sort all by timestamp desc
-          allDocs.sort(function(a,b){
-            var ta = (a.data.timestamp && a.data.timestamp.seconds) ? a.data.timestamp.seconds : 0;
-            var tb = (b.data.timestamp && b.data.timestamp.seconds) ? b.data.timestamp.seconds : 0;
-            return tb - ta;
-          });
-          // Update total
-          var total = document.getElementById('cnt-all');
-          if(total) total.textContent = allDocs.length;
-          renderVisible();
-        }
-      }).catch(function(e){
-        pending--;
-        var cnt = document.getElementById('cnt-'+col);
-        if(cnt) cnt.textContent = 0;
-        if(pending === 0) renderVisible();
+  function done(){
+    pending--;
+    if(pending === 0){
+      allDocs.sort(function(a,b){
+        var ta = (a.data.timestamp && a.data.timestamp.seconds) ? a.data.timestamp.seconds : 0;
+        var tb = (b.data.timestamp && b.data.timestamp.seconds) ? b.data.timestamp.seconds : 0;
+        return tb - ta;
       });
+      var total = document.getElementById('cnt-all');
+      if(total) total.textContent = allDocs.length;
+      renderVisible();
+    }
+  }
+
+  colKeys.forEach(function(col){
+    function processSnap(snap){
+      var count = 0;
+      snap.forEach(function(doc){
+        allDocs.push({col:col, id:doc.id, data:doc.data()});
+        count++;
+      });
+      var cnt = document.getElementById('cnt-'+col);
+      if(cnt) cnt.textContent = count;
+      done();
+    }
+    function onErr(){
+      var cnt = document.getElementById('cnt-'+col);
+      if(cnt) cnt.textContent = 0;
+      done();
+    }
+    db.collection(col).get()
+      .then(processSnap)
+      .catch(onErr);
   });
 }
 
