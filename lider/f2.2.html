@@ -158,8 +158,37 @@ textarea { resize: vertical; min-height: 80px; }
       }
     }).catch(function(){});
     var savedWa = localStorage.getItem('lider_whatsapp');
-    if(savedWa){ var waInput = document.getElementById('whatsapp'); if(waInput) waInput.value = savedWa; }
+    if(savedWa){
+      var waInput = document.getElementById('whatsapp');
+      if(waInput){ waInput.value = savedWa; carregarDados(savedWa.replace(/\D/g,'')); }
+    }
+    document.getElementById('whatsapp').addEventListener('blur', function(){
+      var v = this.value.replace(/\D/g,'');
+      if(v.length >= 10) carregarDados(v);
+    });
   };
+
+  function carregarDados(wa){
+    if(!wa) return;
+    firebase.firestore().collection('lider_f2_2').doc(wa).get().then(function(doc){
+      if(!doc.exists) return;
+      var d = doc.data();
+      if(d.nome) document.getElementById('nome').value = d.nome;
+      if(d.setor) document.getElementById('setor').value = d.setor;
+      if(d.acao_prioritaria) document.getElementById('acao_prioritaria').value = d.acao_prioritaria;
+      if(d.gargalos && Array.isArray(d.gargalos)){
+        d.gargalos.forEach(function(g, idx){
+          var i = idx+1;
+          if(i>6) return;
+          if(g.problema){ var el=document.getElementById('prob'+i); if(el) el.value=g.problema; }
+          if(g.g){ var el=document.getElementById('g'+i); if(el){ el.value=g.g; calcGUT(i); } }
+          if(g.u){ var el=document.getElementById('u'+i); if(el){ el.value=g.u; calcGUT(i); } }
+          if(g.t){ var el=document.getElementById('t'+i); if(el){ el.value=g.t; calcGUT(i); } }
+          if(g.acao){ var el=document.getElementById('acao'+i); if(el) el.value=g.acao; }
+        });
+      }
+    }).catch(function(){});
+  }
 </script>
 <script>
 // Build GUT table rows
@@ -214,7 +243,7 @@ document.getElementById('form').addEventListener('submit', function(e){
     acao_prioritaria: document.getElementById('acao_prioritaria').value,
     timestamp: new Date()
   };
-  db.collection('lider_f2_2').add(dados).then(function(){
+  db.collection('lider_f2_2').doc(wa||Date.now().toString()).set(dados).then(function(){
     alert('Matriz GUT salva com sucesso!');
     if(wa){ window.open('https://wa.me/55'+wa+'?text='+encodeURIComponent('Formulário Líd@r F2.2 - Matriz GUT preenchida!'), '_blank'); }
   }).catch(function(err){ alert('Erro: '+err.message); });
