@@ -327,93 +327,332 @@ function renderVisible(){
 }
 
 // Rótulos legíveis por campo
-var LABELS = {
-  nome:'Nome', cargo:'Cargo', setor:'Setor', whatsapp:'WhatsApp',
-  total:'Pontuação total', fortes:'Pontos fortes', gaps:'Gaps identificados',
-  melhoria:'Área de melhoria', categoria:'Categoria',
-  acao_prioritaria:'Ação prioritária',
-  colaborador:'Colaborador', data_hora:'Data/Hora',
-  habilidade:'Habilidade a desenvolver', formato:'Formato',
-  duracao:'Duração', frequencia:'Frequência', facilitador:'Facilitador',
-  data_inicio:'Data início', indicador:'Indicador de sucesso',
-  gargalo:'Gargalo principal',
-  abertura:'Abertura da conversa', ponto_forte:'Ponto forte',
-  comportamento:'Comportamento a mudar', combinado:'O que foi combinado',
-  local_escolhido:'Local escolhido'
+// Nomes legíveis para dimensões do F1.1
+// Nomes REAIS das dimensões do F1.1 (extraídos do formulário)
+var DIM_NOMES = {
+  d1:'D1 — Liderança', d2:'D2 — Desenv. de Pessoas', d3:'D3 — Retenção',
+  d4:'D4 — Confiança', d5:'D5 — Delegação', d6:'D6 — Proatividade'
+};
+// Perguntas de cada dimensão (ordem real do formulário)
+var DIM_PERGUNTAS = {
+  d1:['Estimulo a participação nas decisões','Estimulo o empowerment','Reconheço minhas falhas e aprendo','Foco em resultados e pessoas','Ensino e oriento minha equipe'],
+  d2:['Inovo e me atualizo constantemente','Desafio as pessoas a crescerem','Valorizo o melhor de cada um','Dou feedback regularmente','Reconheço as conquistas das pessoas'],
+  d3:['Me realizo com os resultados das pessoas','Cuido das pessoas com respeito','Proporciono crescimento e realização','Valorizo o aprendizado pelo erro','Cumpro minhas promessas'],
+  d4:['Digo o que penso com respeito','Comunico a verdade mesmo quando é difícil','Sou exemplo do que prego','Ajo com justiça','Evito assumir tarefas técnicas da equipe'],
+  d5:['Estabeleço co-responsabilidade','Analiso tarefa e perfil antes de delegar','Defino prazos e limites claros','Estou disponível sem resolver por elas','Penso nos problemas antes que aconteçam'],
+  d6:['Enfrento os problemas de frente','Atuo rapidamente em crises','Antecipo mudanças e me preparo','Supero obstáculos com criatividade']
 };
 
-function formatVal(v){
-  if(v === null || v === undefined) return '';
+function fmtBool(v){ return v ? '✅ Sim' : '❌ Não'; }
+function fmtVal(v){
+  if(v === null || v === undefined || v === '') return '';
+  if(typeof v === 'boolean') return fmtBool(v);
   if(typeof v === 'object' && v.seconds) return new Date(v.seconds*1000).toLocaleDateString('pt-BR');
-  if(typeof v === 'object') return JSON.stringify(v);
   return String(v);
+}
+function lin(label, val){ var v=fmtVal(val); if(v) return '*'+label+':* '+v; return ''; }
+function sec(title){ return '\n*── '+title+' ──*'; }
+
+function formatarMensagem(r){
+  var d = r.data;
+  var col = r.col;
+  var nome = d.nome || d.nomes || '(participante)';
+  var label = badgeLabel(col);
+  var L = []; // linhas
+  L.push('🌱 *Líd@r 5.0 — '+label+'*');
+  L.push('Olá, *'+nome+'*! Seguem suas respostas:\n');
+
+  // ── F1.1 — Diagnóstico de Liderança ──
+  if(col === 'lider_f1_1'){
+    if(d.cargo) L.push(lin('Cargo', d.cargo));
+    if(d.setor) L.push(lin('Setor', d.setor));
+    if(d.total != null) L.push(lin('Pontuação total', d.total + ' / 154'));
+    if(d.categoria) L.push(lin('Perfil', d.categoria));
+    // Dimensões com perguntas detalhadas
+    ['d1','d2','d3','d4','d5','d6'].forEach(function(dk){
+      var arr = d[dk];
+      if(!arr || !Array.isArray(arr)) return;
+      var soma = arr.reduce(function(a,b){return a+(parseInt(b)||0);},0);
+      var max = arr.length * 5;
+      L.push(sec(DIM_NOMES[dk]+' — '+soma+'/'+max+' pts'));
+      var pergs = DIM_PERGUNTAS[dk] || [];
+      arr.forEach(function(nota, qi){
+        var pergunta = pergs[qi] || ('Questão '+(qi+1));
+        L.push('  '+nota+'/5 — '+pergunta);
+      });
+    });
+    if(d.fortes) L.push(sec('Pontos Fortes')+'\n'+d.fortes);
+    if(d.melhoria) L.push(sec('Área de Melhoria')+'\n'+d.melhoria);
+    // Metas
+    var metas = d.metas;
+    if(metas){ try{ if(typeof metas==='string') metas=JSON.parse(metas); }catch(e){} }
+    if(Array.isArray(metas) && metas.length){
+      L.push(sec('Metas de Desenvolvimento'));
+      metas.forEach(function(m,i){
+        if(m && m.meta) L.push((i+1)+'. '+m.meta+(m.inicio?' ('+m.inicio+' → '+m.termino+')':''));
+      });
+    }
+  }
+
+  // ── F1.2 — Mapeamento Geracional ──
+  else if(col === 'lider_f1_2'){
+    if(d.cargo) L.push(lin('Cargo', d.cargo));
+    if(d.setor) L.push(lin('Setor', d.setor));
+    // Equipe
+    var equipe = d.equipe;
+    if(equipe){ try{ if(typeof equipe==='string') equipe=JSON.parse(equipe); }catch(e){} }
+    if(Array.isArray(equipe) && equipe.length){
+      L.push(sec('Composição da Equipe'));
+      equipe.forEach(function(m,i){ if(m) L.push((i+1)+'. '+fmtVal(m)); });
+    }
+    if(d.fortes) L.push(sec('Pontos Fortes da Equipe')+'\n'+d.fortes);
+    if(d.fracos) L.push(sec('Pontos a Desenvolver')+'\n'+d.fracos);
+  }
+
+  // ── F1.3 — Corda das Soluções (grupo) ──
+  else if(col === 'lider_f1_3'){
+    var partic = d.participantes;
+    if(partic){ try{ if(typeof partic==='string') partic=JSON.parse(partic); }catch(e){} }
+    if(Array.isArray(partic) && partic.length){
+      L.push('*Participantes:* '+partic.join(', '));
+    }
+    var trans = d.transformacoes;
+    if(trans){ try{ if(typeof trans==='string') trans=JSON.parse(trans); }catch(e){} }
+    if(Array.isArray(trans) && trans.length){
+      L.push(sec('Transformações'));
+      trans.forEach(function(t,i){
+        if(t && (t.problema||t.solucao)){
+          L.push((i+1)+'. ❌ *Reclamação:* '+fmtVal(t.problema));
+          L.push('   ✅ *Solução:* '+fmtVal(t.solucao));
+        }
+      });
+    }
+    if(d.comprometimento) L.push(sec('Comprometimento do Grupo')+'\n'+d.comprometimento);
+  }
+
+  // ── F2.1 — Autodiagnóstico de Competências ──
+  else if(col === 'lider_f2_1'){
+    if(d.cargo) L.push(lin('Cargo', d.cargo));
+    if(d.setor) L.push(lin('Setor', d.setor));
+    if(d.media_geral!=null) L.push(lin('Média geral', d.media_geral));
+    L.push(sec('Competências Avaliadas'));
+    for(var i=1;i<=15;i++){
+      var v=d['char_'+i+'_valor'], ev=d['char_'+i+'_evidencia'];
+      var nm=d['char_'+i+'_nome']||(CHAR_NOMES[i-1]||'Competência '+i);
+      if(v!=null) L.push('*'+nm+':* '+v+(ev?' — '+ev:''));
+    }
+    if(d.pontos_fortes) L.push(sec('Pontos Fortes')+'\n'+d.pontos_fortes);
+    if(d.gaps) L.push(sec('Gaps Identificados')+'\n'+d.gaps);
+    var plano=d.plano_desenvolvimento;
+    if(plano){ try{ if(typeof plano==='string') plano=JSON.parse(plano); }catch(e){} }
+    if(Array.isArray(plano) && plano.length){
+      L.push(sec('Plano de Desenvolvimento'));
+      plano.forEach(function(p,i){ if(p) L.push((i+1)+'. '+fmtVal(p)); });
+    }
+  }
+
+  // ── F2.2 — Matriz GUT ──
+  else if(col === 'lider_f2_2'){
+    if(d.setor) L.push(lin('Setor', d.setor));
+    var gargh = d.gargalos;
+    if(gargh){ try{ if(typeof gargh==='string') gargh=JSON.parse(gargh); }catch(e){} }
+    if(Array.isArray(gargh) && gargh.length){
+      L.push(sec('Matriz GUT'));
+      gargh.forEach(function(g,i){
+        if(g && g.problema){
+          var gut='G:'+fmtVal(g.g)+' U:'+fmtVal(g.u)+' T:'+fmtVal(g.t)+' = '+fmtVal(g.gut);
+          L.push((i+1)+'. *'+g.problema+'* → '+gut);
+        }
+      });
+    }
+    if(d.acao_prioritaria) L.push(sec('Ação Prioritária')+'\n'+d.acao_prioritaria);
+  }
+
+  // ── F2.3 — Trio com Foco (grupo) ──
+  else if(col === 'lider_f2_3'){
+    var partic = d.participantes;
+    if(partic){ try{ if(typeof partic==='string') partic=JSON.parse(partic); }catch(e){} }
+    if(Array.isArray(partic) && partic.length){
+      L.push(sec('Participantes'));
+      partic.forEach(function(p,i){
+        if(p && typeof p==='object'){
+          var linha=(i+1)+'. *'+(p.nome||'')+'*';
+          if(p.setor) linha+=' — '+p.setor;
+          L.push(linha);
+          if(p.foco) L.push('   📌 Foco: '+p.foco);
+          if(p.acao) L.push('   ⚡ Ação: '+p.acao);
+          if(p.apoio) L.push('   🤝 Apoio: '+p.apoio);
+        } else { L.push((i+1)+'. '+fmtVal(p)); }
+      });
+    }
+  }
+
+  // ── F2.4 — Plano de Ação 5W2H ──
+  else if(col === 'lider_f2_4'){
+    if(d.setor) L.push(lin('Setor', d.setor));
+    L.push(sec('5W2H'));
+    if(d.what) L.push('*O quê (What):* '+d.what);
+    if(d.why) L.push('*Por quê (Why):* '+d.why);
+    if(d.who) L.push('*Quem (Who):* '+d.who);
+    if(d.where) L.push('*Onde (Where):* '+d.where);
+    if(d.when) L.push('*Quando (When):* '+d.when);
+    if(d.how) L.push('*Como (How):* '+d.how);
+    if(d.howmuch) L.push('*Quanto custa (How much):* '+d.howmuch);
+    if(d.compromisso) L.push(sec('Comprometimento')+'\n'+d.compromisso);
+  }
+
+  // ── F3.1 — Grupo STAR (grupo) ──
+  else if(col === 'lider_f3_1'){
+    var partic = d.participantes;
+    if(partic){ try{ if(typeof partic==='string') partic=JSON.parse(partic); }catch(e){} }
+    if(Array.isArray(partic) && partic.length){
+      L.push('*Total de participantes:* '+partic.length);
+      L.push(sec('Participantes e Respostas'));
+      partic.forEach(function(p,i){
+        if(p && typeof p==='object'){
+          var nl=(i+1)+'. *'+(p.nome||'')+'*';
+          if(p.setor) nl+=' ('+p.setor+')';
+          L.push(nl);
+          if(p.situacao) L.push('   📋 Situação: '+p.situacao);
+          if(p.tarefa) L.push('   🎯 Tarefa: '+p.tarefa);
+          if(p.acao) L.push('   ⚡ Ação: '+p.acao);
+          if(p.resultado) L.push('   ✅ Resultado: '+p.resultado);
+        }
+      });
+    }
+  }
+
+  // ── F3.2 — Plano de Treinamento ──
+  else if(col === 'lider_f3_2'){
+    if(d.setor) L.push(lin('Setor', d.setor));
+    var diag=d.diagnostico;
+    if(diag && typeof diag==='object'){
+      L.push(sec('Diagnóstico'));
+      if(diag.ineficiencia) L.push('*Ineficiência:* '+diag.ineficiencia);
+      if(diag.habilidade_faltando) L.push('*Habilidade faltando:* '+diag.habilidade_faltando);
+      if(diag.tempo_perdido) L.push('*Tempo perdido:* '+diag.tempo_perdido);
+      if(diag.impacto_treino) L.push('*Impacto esperado:* '+diag.impacto_treino);
+    }
+    var plano=d.plano;
+    if(plano && typeof plano==='object'){
+      L.push(sec('Plano de Treinamento'));
+      if(plano.habilidade) L.push('*Habilidade:* '+plano.habilidade);
+      if(plano.formato) L.push('*Formato:* '+plano.formato);
+      if(plano.duracao) L.push('*Duração:* '+plano.duracao);
+      if(plano.frequencia) L.push('*Frequência:* '+plano.frequencia);
+      if(plano.facilitador) L.push('*Facilitador:* '+plano.facilitador);
+      if(plano.data_inicio) L.push('*Início:* '+plano.data_inicio);
+      if(plano.indicador) L.push('*Indicador de sucesso:* '+plano.indicador);
+    }
+  }
+
+  // ── F3.3 — PDCA + Triângulo do Hábito ──
+  else if(col === 'lider_f3_3'){
+    if(d.setor) L.push(lin('Setor', d.setor));
+    if(d.gargalo) L.push(lin('Gargalo principal', d.gargalo));
+    var pdca=d.pdca;
+    if(pdca && typeof pdca==='object'){
+      L.push(sec('PDCA'));
+      if(pdca.plan) L.push('*Plan (Planejar):* '+pdca.plan);
+      if(pdca.do) L.push('*Do (Executar):* '+pdca.do);
+      if(pdca.check) L.push('*Check (Verificar):* '+pdca.check);
+      if(pdca.act) L.push('*Act (Ajustar):* '+pdca.act);
+    }
+    var hab=d.triangulo_habito;
+    if(hab && typeof hab==='object'){
+      L.push(sec('Triângulo do Hábito'));
+      if(hab.gatilho) L.push('*Gatilho:* '+hab.gatilho);
+      if(hab.rotina) L.push('*Rotina:* '+hab.rotina);
+      if(hab.recompensa) L.push('*Recompensa:* '+hab.recompensa);
+    }
+  }
+
+  // ── F4.1 — CNV / Feedback ──
+  else if(col === 'lider_f4_1'){
+    if(d.colaborador) L.push(lin('Colaborador', d.colaborador));
+    var cnv=d.cnv;
+    if(cnv && typeof cnv==='object'){
+      L.push(sec('Comunicação Não Violenta'));
+      if(cnv.observacao) L.push('*Observação:* '+cnv.observacao);
+      if(cnv.sentimento) L.push('*Sentimento:* '+cnv.sentimento);
+      if(cnv.necessidade) L.push('*Necessidade:* '+cnv.necessidade);
+      if(cnv.pedido) L.push('*Pedido:* '+cnv.pedido);
+    }
+    var rot=d.roteiro;
+    if(rot && typeof rot==='object'){
+      L.push(sec('Roteiro da Conversa'));
+      if(rot.data_local) L.push('*Data/Local:* '+rot.data_local);
+      if(rot.ambiente_seguro) L.push('*Ambiente seguro:* '+rot.ambiente_seguro);
+      if(rot.verificar_compreensao) L.push('*Verificar compreensão:* '+rot.verificar_compreensao);
+    }
+  }
+
+  // ── F4.2 — Checklist de Feedback ──
+  else if(col === 'lider_f4_2'){
+    if(d.colaborador) L.push(lin('Colaborador', d.colaborador));
+    if(d.data_hora) L.push(lin('Data/Hora', d.data_hora));
+    var geo=d.psicogeografia;
+    if(geo && typeof geo==='object'){
+      L.push(sec('Psicogeografia'));
+      if(geo.local_privado!=null) L.push('Local privado: '+fmtBool(geo.local_privado));
+      if(geo.posicao_parceria!=null) L.push('Posição de parceria: '+fmtBool(geo.posicao_parceria));
+      if(geo.sem_mesa!=null) L.push('Sem mesa entre eles: '+fmtBool(geo.sem_mesa));
+      if(geo.celulares_silencio!=null) L.push('Celulares no silêncio: '+fmtBool(geo.celulares_silencio));
+      if(geo.horario_adequado!=null) L.push('Horário adequado: '+fmtBool(geo.horario_adequado));
+      if(geo.agua_disponivel!=null) L.push('Água disponível: '+fmtBool(geo.agua_disponivel));
+      if(geo.local_escolhido) L.push('Local escolhido: '+geo.local_escolhido);
+    }
+    var prep=d.preparacao;
+    if(prep && typeof prep==='object'){
+      L.push(sec('Preparação'));
+      if(prep.fatos_especificos!=null) L.push('Fatos específicos: '+fmtBool(prep.fatos_especificos));
+      if(prep.pessoa_vs_comportamento!=null) L.push('Comportamento ≠ pessoa: '+fmtBool(prep.pessoa_vs_comportamento));
+      if(prep.exemplos_concretos!=null) L.push('Exemplos concretos: '+fmtBool(prep.exemplos_concretos));
+      if(prep.mudanca_especifica!=null) L.push('Mudança específica: '+fmtBool(prep.mudanca_especifica));
+      if(prep.estado_emocional!=null) L.push('Estado emocional ok: '+fmtBool(prep.estado_emocional));
+      if(prep.tempo_suficiente!=null) L.push('Tempo suficiente: '+fmtBool(prep.tempo_suficiente));
+    }
+    var dur=d.durante;
+    if(dur && typeof dur==='object'){
+      L.push(sec('Durante a Conversa'));
+      if(dur.abertura) L.push('*Abertura:* '+dur.abertura);
+      if(dur.ponto_forte) L.push('*Ponto forte:* '+dur.ponto_forte);
+      if(dur.comportamento) L.push('*Comportamento a mudar:* '+dur.comportamento);
+      if(dur.combinado) L.push('*O que foi combinado:* '+dur.combinado);
+    }
+  }
+
+  L.push('\n_Programa Líd@r 5.0 — CBCO_');
+  return L.filter(function(l){ return l!==undefined && l!==null; }).join('\n');
+}
+
+function getFiltered(idx){
+  var selCol = document.getElementById('sel-form').value;
+  var search = (document.getElementById('search-name').value || '').toLowerCase().trim();
+  var filtered = allDocs.filter(function(r){
+    if(selCol !== 'all' && r.col !== selCol) return false;
+    if(search){
+      var n = (r.data.nome||r.data.nomes||r.data.name||'').toLowerCase();
+      if(n.indexOf(search) === -1) return false;
+    }
+    return true;
+  });
+  return filtered[idx] || null;
 }
 
 function enviarRespostas(e, waNum, idx){
   e.preventDefault();
-  // Encontra o doc correspondente ao idx renderizado
-  var selCol = document.getElementById('sel-form').value;
-  var search = (document.getElementById('search-name').value || '').toLowerCase().trim();
-  var filtered = allDocs.filter(function(r){
-    if(selCol !== 'all' && r.col !== selCol) return false;
-    if(search){
-      var n = ((r.data.nome||r.data.name||r.data.participante||'')).toLowerCase();
-      if(n.indexOf(search) === -1) return false;
-    }
-    return true;
-  });
-  var r = filtered[idx];
+  var r = getFiltered(idx);
   if(!r) return;
-
-  var nome = r.data.nome || r.data.name || '(sem nome)';
-  var label = badgeLabel(r.col);
-  var skipKeys = {timestamp:1,createdAt:1,whatsapp:1,ts:1};
-
-  var linhas = ['🌱 *Líd@r — '+label+'*','Olá, *'+nome+'*! Seguem suas respostas:',''];
-
-  function addObj(obj, prefix){
-    Object.keys(obj).forEach(function(k){
-      if(skipKeys[k]) return;
-      var v = obj[k];
-      var lbl = LABELS[k] || k;
-      if(prefix) lbl = prefix+' › '+lbl;
-      if(v && typeof v === 'object' && !v.seconds && !Array.isArray(v)){
-        addObj(v, LABELS[k]||k);
-      } else if(Array.isArray(v)){
-        linhas.push('*'+lbl+':*');
-        v.forEach(function(item, i){
-          if(item && typeof item === 'object'){
-            var sub = Object.keys(item).map(function(kk){ return (LABELS[kk]||kk)+': '+formatVal(item[kk]); }).join(' | ');
-            linhas.push('  '+(i+1)+'. '+sub);
-          } else { linhas.push('  '+(i+1)+'. '+formatVal(item)); }
-        });
-      } else {
-        var fv = formatVal(v);
-        if(fv) linhas.push('*'+(LABELS[k]||k)+':* '+fv);
-      }
-    });
-  }
-  addObj(r.data, '');
-  linhas.push('','_Programa Líd@r 5.0 — CBCO_');
-
-  var msg = encodeURIComponent(linhas.join('\n'));
-  // WhatsApp limita ~2000 chars na URL
-  window.open('https://wa.me/55'+waNum+'?text='+msg, '_blank');
+  var msg = formatarMensagem(r);
+  // Trunca se passar de 2000 chars (limite WhatsApp deep link)
+  if(msg.length > 1900) msg = msg.substring(0, 1900) + '\n\n_(mensagem truncada)_';
+  window.open('https://wa.me/55'+waNum+'?text='+encodeURIComponent(msg), '_blank');
 }
 
 function excluirResposta(e, idx){
   e.preventDefault();
-  var selCol = document.getElementById('sel-form').value;
-  var search = (document.getElementById('search-name').value || '').toLowerCase().trim();
-  var filtered = allDocs.filter(function(r){
-    if(selCol !== 'all' && r.col !== selCol) return false;
-    if(search){
-      var n = ((r.data.nome||r.data.name||r.data.participante||'')).toLowerCase();
-      if(n.indexOf(search) === -1) return false;
-    }
-    return true;
-  });
-  var r = filtered[idx];
+  var r = getFiltered(idx);
   if(!r) return;
   var nome = r.data.nome || r.data.name || '(sem nome)';
   if(!confirm('Excluir resposta de "'+nome+'" em '+badgeLabel(r.col)+'?\n\nEssa ação não pode ser desfeita.')) return;
