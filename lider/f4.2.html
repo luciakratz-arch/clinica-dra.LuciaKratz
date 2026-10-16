@@ -184,8 +184,49 @@ window.onload = function(){
     }
   }).catch(function(){});
   var wa = localStorage.getItem('lider_whatsapp');
-  if(wa){ var w = document.getElementById('whatsapp'); if(w) w.value = wa; }
+  if(wa){ var w = document.getElementById('whatsapp'); if(w){ w.value = wa; carregarDados(wa.replace(/\D/g,'')); } }
+  document.getElementById('whatsapp').addEventListener('blur', function(){
+    var v = this.value.replace(/\D/g,'');
+    if(v.length >= 10) carregarDados(v);
+  });
 };
+
+function setChk(id, val, wrapId){
+  var cb = document.getElementById(id);
+  if(cb){ cb.checked = !!val; }
+  if(wrapId){ var w=document.getElementById(wrapId); if(w) w.style.background=val?'#dcfce7':''; }
+}
+
+function carregarDados(wa){
+  if(!wa) return;
+  firebase.firestore().collection('lider_f4_2').doc(wa).get().then(function(doc){
+    if(!doc.exists) return;
+    var d = doc.data();
+    if(d.nome) document.getElementById('nome').value = d.nome;
+    if(d.colaborador) document.getElementById('colaborador').value = d.colaborador;
+    if(d.data_hora) document.getElementById('data_hora').value = d.data_hora;
+    if(d.psicogeografia){
+      var p = d.psicogeografia;
+      setChk('c1',p.local_privado,'ci1'); setChk('c2',p.posicao_parceria,'ci2');
+      setChk('c3',p.sem_mesa,'ci3'); setChk('c4',p.celulares_silencio,'ci4');
+      setChk('c5',p.horario_adequado,'ci5'); setChk('c6',p.agua_disponivel,'ci6');
+      if(p.local_escolhido){ var el=document.getElementById('local_escolhido'); if(el) el.value=p.local_escolhido; }
+    }
+    if(d.preparacao){
+      var pr = d.preparacao;
+      setChk('c7',pr.fatos_especificos,'ci7'); setChk('c8',pr.pessoa_vs_comportamento,'ci8');
+      setChk('c9',pr.exemplos_concretos,'ci9'); setChk('c10',pr.mudanca_especifica,'ci10');
+      setChk('c11',pr.estado_emocional,'ci11'); setChk('c12',pr.tempo_suficiente,'ci12');
+    }
+    if(d.durante){
+      var dr = d.durante;
+      if(dr.abertura){ var el=document.getElementById('abertura'); if(el) el.value=dr.abertura; }
+      if(dr.ponto_forte){ var el=document.getElementById('ponto_forte'); if(el) el.value=dr.ponto_forte; }
+      if(dr.comportamento){ var el=document.getElementById('comportamento'); if(el) el.value=dr.comportamento; }
+      if(dr.combinado){ var el=document.getElementById('combinado'); if(el) el.value=dr.combinado; }
+    }
+  }).catch(function(){});
+}
 
 function enviar(){
   var db = firebase.firestore();
@@ -224,7 +265,7 @@ function enviar(){
     },
     timestamp: firebase.firestore.FieldValue.serverTimestamp()
   };
-  db.collection('lider_f4_2').add(dados).then(function(){
+  db.collection('lider_f4_2').doc(wa.replace(/\D/g,'')||Date.now().toString()).set(dados).then(function(){
     msg.className='msg ok'; msg.textContent='✅ Checklist salvo com sucesso!';
   }).catch(function(e){
     msg.className='msg err'; msg.textContent='Erro ao salvar: '+e.message;
