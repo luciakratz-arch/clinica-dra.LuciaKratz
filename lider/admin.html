@@ -398,15 +398,54 @@ function formatarMensagem(r){
   else if(col === 'lider_f1_2'){
     if(d.cargo) L.push(lin('Cargo', d.cargo));
     if(d.setor) L.push(lin('Setor', d.setor));
-    // Equipe
-    var equipe = d.equipe;
-    if(equipe){ try{ if(typeof equipe==='string') equipe=JSON.parse(equipe); }catch(e){} }
-    if(Array.isArray(equipe) && equipe.length){
-      L.push(sec('Composição da Equipe'));
-      equipe.forEach(function(m,i){ if(m) L.push((i+1)+'. '+fmtVal(m)); });
+    // Equipe: array de {nome, geracao}
+    var eq12 = d.equipe;
+    if(eq12){ try{ if(typeof eq12==='string') eq12=JSON.parse(eq12); }catch(e){} }
+    if(Array.isArray(eq12) && eq12.length){
+      L.push(sec('Equipe ('+eq12.length+' pessoa'+(eq12.length>1?'s':'')+')'));
+      // Contagem por geração
+      var genCount={};
+      eq12.forEach(function(m){ if(m&&m.geracao) genCount[m.geracao]=(genCount[m.geracao]||0)+1; });
+      var genTexto=Object.keys(genCount).map(function(g){return genCount[g]+' '+g;}).join(', ');
+      if(genTexto) L.push('📊 '+genTexto);
+      L.push('');
+      eq12.forEach(function(m,i){
+        if(!m) return;
+        L.push((i+1)+'. *'+(m.nome||'–')+'* — '+(m.geracao||'–'));
+      });
     }
-    if(d.fortes) L.push(sec('Pontos Fortes da Equipe')+'\n'+d.fortes);
-    if(d.fracos) L.push(sec('Pontos a Desenvolver')+'\n'+d.fracos);
+    // Pontos fortes: array de {nome, geracao, descricao, importancia}
+    var frt12 = d.fortes;
+    if(frt12){ try{ if(typeof frt12==='string') frt12=JSON.parse(frt12); }catch(e){} }
+    if(Array.isArray(frt12) && frt12.length){
+      var frtFilt = frt12.filter(function(f){ return f && f.descricao; });
+      if(frtFilt.length){
+        L.push(sec('Pontos Fortes da Equipe'));
+        frtFilt.sort(function(a,b){return (b.importancia||0)-(a.importancia||0);});
+        frtFilt.forEach(function(f){
+          L.push('⭐ *'+fmtVal(f.nome)+'* ('+fmtVal(f.geracao)+') — importância '+fmtVal(f.importancia)+'/10');
+          L.push('   '+f.descricao);
+        });
+      }
+    } else if(typeof d.fortes==='string' && d.fortes){
+      L.push(sec('Pontos Fortes da Equipe')+'\n'+d.fortes);
+    }
+    // Pontos de melhoria: array de {nome, geracao, descricao, importancia}
+    var frk12 = d.fracos;
+    if(frk12){ try{ if(typeof frk12==='string') frk12=JSON.parse(frk12); }catch(e){} }
+    if(Array.isArray(frk12) && frk12.length){
+      var frkFilt = frk12.filter(function(f){ return f && f.descricao; });
+      if(frkFilt.length){
+        L.push(sec('Áreas de Desenvolvimento'));
+        frkFilt.sort(function(a,b){return (b.importancia||0)-(a.importancia||0);});
+        frkFilt.forEach(function(f){
+          L.push('🔧 *'+fmtVal(f.nome)+'* ('+fmtVal(f.geracao)+') — importância '+fmtVal(f.importancia)+'/10');
+          L.push('   '+f.descricao);
+        });
+      }
+    } else if(typeof d.fracos==='string' && d.fracos){
+      L.push(sec('Áreas de Desenvolvimento')+'\n'+d.fracos);
+    }
   }
 
   // ── F1.3 — Corda das Soluções (grupo) ──
