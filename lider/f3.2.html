@@ -120,8 +120,33 @@ window.onload = function(){
     }
   }).catch(function(){});
   var wa = localStorage.getItem('lider_whatsapp');
-  if(wa){ var w = document.getElementById('whatsapp'); if(w) w.value = wa; }
+  if(wa){ var w = document.getElementById('whatsapp'); if(w) w.value = wa; carregarDados(wa.replace(/\D/g,'')); }
+
+  document.getElementById('whatsapp').addEventListener('blur', function(){
+    var v = this.value.replace(/\D/g,'');
+    if(v.length >= 10) carregarDados(v);
+  });
 };
+
+function carregarDados(wa){
+  if(!wa) return;
+  var db = firebase.firestore();
+  db.collection('lider_f3_2').doc(wa).get().then(function(doc){
+    if(!doc.exists) return;
+    var d = doc.data();
+    var ids = ['nome','setor','habilidade','formato','duracao','frequencia','facilitador','data_inicio','indicador'];
+    ids.forEach(function(id){ if(d[id]!==undefined){ var el=document.getElementById(id); if(el) el.value=d[id]; } });
+    if(d.diagnostico){
+      ['diag1','diag2','diag3','diag4'].forEach(function(k){
+        if(d.diagnostico[k.replace('diag','ineficiencia')] !== undefined){ var el=document.getElementById(k); if(el) el.value=d.diagnostico[k.replace('diag','ineficiencia')]||''; }
+      });
+      var el1=document.getElementById('diag1'); if(el1&&d.diagnostico.ineficiencia!==undefined) el1.value=d.diagnostico.ineficiencia;
+      var el2=document.getElementById('diag2'); if(el2&&d.diagnostico.habilidade_faltando!==undefined) el2.value=d.diagnostico.habilidade_faltando;
+      var el3=document.getElementById('diag3'); if(el3&&d.diagnostico.tempo_perdido!==undefined) el3.value=d.diagnostico.tempo_perdido;
+      var el4=document.getElementById('diag4'); if(el4&&d.diagnostico.impacto_treino!==undefined) el4.value=d.diagnostico.impacto_treino;
+    }
+  }).catch(function(){});
+}
 
 function enviar(){
   var db = firebase.firestore();
@@ -150,7 +175,7 @@ function enviar(){
     },
     timestamp: firebase.firestore.FieldValue.serverTimestamp()
   };
-  db.collection('lider_f3_2').add(dados).then(function(){
+  db.collection('lider_f3_2').doc(wa.replace(/\D/g,'')).set(dados).then(function(){
     msg.className='msg ok'; msg.textContent='✅ Respostas salvas com sucesso!';
   }).catch(function(e){
     msg.className='msg err'; msg.textContent='Erro ao salvar: '+e.message;
