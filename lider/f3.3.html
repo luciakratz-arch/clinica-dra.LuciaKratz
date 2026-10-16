@@ -133,8 +133,30 @@ window.onload = function(){
     }
   }).catch(function(){});
   var wa = localStorage.getItem('lider_whatsapp');
-  if(wa){ var w = document.getElementById('whatsapp'); if(w) w.value = wa; }
+  if(wa){ var w = document.getElementById('whatsapp'); if(w) w.value = wa; carregarDados(wa.replace(/\D/g,'')); }
+
+  document.getElementById('whatsapp').addEventListener('blur', function(){
+    var v = this.value.replace(/\D/g,'');
+    if(v.length >= 10) carregarDados(v);
+  });
 };
+
+function carregarDados(wa){
+  if(!wa) return;
+  var db = firebase.firestore();
+  db.collection('lider_f3_3').doc(wa).get().then(function(doc){
+    if(!doc.exists) return;
+    var d = doc.data();
+    ['nome','setor','gargalo'].forEach(function(id){ if(d[id]!==undefined){ var el=document.getElementById(id); if(el) el.value=d[id]; } });
+    if(d.pdca){
+      ['plan','check','act'].forEach(function(k){ if(d.pdca[k]!==undefined){ var el=document.getElementById(k); if(el) el.value=d.pdca[k]; } });
+      if(d.pdca['do']!==undefined){ var el=document.getElementById('do_exec'); if(el) el.value=d.pdca['do']; }
+    }
+    if(d.triangulo_habito){
+      ['gatilho','rotina','recompensa'].forEach(function(k){ if(d.triangulo_habito[k]!==undefined){ var el=document.getElementById(k); if(el) el.value=d.triangulo_habito[k]; } });
+    }
+  }).catch(function(){});
+}
 
 function enviar(){
   var db = firebase.firestore();
@@ -160,7 +182,7 @@ function enviar(){
     },
     timestamp: firebase.firestore.FieldValue.serverTimestamp()
   };
-  db.collection('lider_f3_3').add(dados).then(function(){
+  db.collection('lider_f3_3').doc(wa.replace(/\D/g,'')).set(dados).then(function(){
     msg.className='msg ok'; msg.textContent='✅ Respostas salvas com sucesso!';
   }).catch(function(e){
     msg.className='msg err'; msg.textContent='Erro ao salvar: '+e.message;
