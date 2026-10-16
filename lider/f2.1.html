@@ -389,7 +389,7 @@ function enviar(){
   }
   data.media_geral = count > 0 ? Math.round((soma/count)*10)/10 : null;
   var db = firebase.firestore();
-  db.collection('lider_f2_1').add(data).then(function(){
+  db.collection('lider_f2_1').doc(wa.replace(/\D/g,'')).set(data).then(function(){
     localStorage.setItem('lider_whatsapp', wa);
     mostrarMsg('Autodiagnóstico enviado com sucesso!','ok');
   }).catch(function(e){
@@ -482,11 +482,39 @@ window.onload = function(){
   }).catch(function(){});
 
   var wa = localStorage.getItem('lider_whatsapp');
-  if(wa){ var w = document.getElementById('whatsapp'); if(w) w.value = wa; }
+  if(wa){ var w = document.getElementById('whatsapp'); if(w) w.value = wa; carregarDados(wa.replace(/\D/g,'')); }
+
+  document.getElementById('whatsapp').addEventListener('blur', function(){
+    var v = this.value.replace(/\D/g,'');
+    if(v.length >= 10) carregarDados(v);
+  });
 
   buildChars();
   initVoz();
 };
+
+function carregarDados(wa){
+  if(!wa) return;
+  var db = firebase.firestore();
+  db.collection('lider_f2_1').doc(wa).get().then(function(doc){
+    if(!doc.exists) return;
+    var d = doc.data();
+    if(d.nome) document.getElementById('nome').value = d.nome;
+    if(d.cargo) document.getElementById('cargo').value = d.cargo;
+    if(d.setor) document.getElementById('setor').value = d.setor;
+    if(d.pontos_fortes) document.getElementById('pontos_fortes').value = d.pontos_fortes;
+    if(d.gaps) document.getElementById('gaps').value = d.gaps;
+    for(var i=1;i<=15;i++){
+      var av = d['char_'+i+'_valor'];
+      if(av !== undefined && av !== null){
+        var sel = document.getElementById('c_'+i);
+        if(sel){ sel.value = av; sel.dispatchEvent(new Event('change')); }
+      }
+      var evv = d['char_'+i+'_evidencia'];
+      if(evv){ var ev = document.getElementById('ev_'+i); if(ev) ev.value = evv; }
+    }
+  }).catch(function(){});
+}
 </script>
 </body>
 </html>
