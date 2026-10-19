@@ -987,6 +987,8 @@ function AbaEvolucao({ paciente }) {
   const [verTodoHistorico, setVerTodoHistorico] = useState(false);
   const [itemExpandido, setItemExpandido] = useState(null);
   const [rodas, setRodas] = useState([]);
+  const [rastrDiag, setRastrDiag] = useState([]);
+  const [rastrDiagAberto, setRastrDiagAberto] = useState(null);
   useEffect(()=>{
     const u1 = db.collection("clinica_humor")
       .where("pacienteId","==",paciente.id)
@@ -1053,6 +1055,14 @@ function AbaEvolucao({ paciente }) {
         const vistas=new Set(); const uniq=[];
         docs.forEach(d=>{if(!vistas.has(d.data)){vistas.add(d.data);uniq.push(d);}});
         setRodas(uniq.slice(0,10));
+      }).catch(()=>{});
+    // Rastreamento Diagnóstico DSM-5
+    db.collection("clinica_rastreamento_diagnostico")
+      .where("pacienteNome","==",paciente.nome)
+      .get().then(snap=>{
+        const docs=snap.docs.map(d=>({id:d.id,...d.data()}))
+          .sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+        setRastrDiag(docs);
       }).catch(()=>{});
     return ()=>{ u1(); u2(); u3(); u4(); u5(); u6(); u7(); u8(); };
   },[paciente.id]);
@@ -1332,6 +1342,70 @@ function AbaEvolucao({ paciente }) {
                           <div style={{fontSize:13,color:reg.resposta?"#1f2937":"#9ca3af",lineHeight:1.6,paddingLeft:14,borderLeft:"3px solid var(--purple-soft,#f3e8ff)"}}>{reg.resposta||"— sem resposta —"}</div>
                         </div>
                       ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ── RASTREAMENTO DIAGNÓSTICO DSM-5 ── */}
+      {rastrDiag.length>0&&(
+        <div className="card" style={{marginTop:16}}>
+          <div style={{fontWeight:600,marginBottom:14,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <span>🎯 Rastreamento Diagnóstico DSM-5</span>
+            <span style={{fontSize:13,color:"var(--text-muted)"}}>{rastrDiag.length} resposta(s)</span>
+          </div>
+          <div style={{display:"flex",flexDirection:"column",gap:10}}>
+            {rastrDiag.map(resp=>{
+              const isOpen = rastrDiagAberto === resp.id;
+              const resultados = resp.resultados || [];
+              const comCriterio = resultados.filter(r=>r.nC>=r.minC);
+              const fmtData = ts => ts?.seconds ? new Date(ts.seconds*1000).toLocaleDateString("pt-BR") : "—";
+              return (
+                <div key={resp.id} style={{border:"1px solid #e5e7eb",borderRadius:12,overflow:"hidden"}}>
+                  <div onClick={()=>setRastrDiagAberto(isOpen?null:resp.id)}
+                    style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 16px",cursor:"pointer",background:isOpen?"#f5f3ff":"white"}}>
+                    <div>
+                      <div style={{fontWeight:700,fontSize:13,color:"var(--text-dark)"}}>
+                        {resp.grupoLabel || resp.grupo || "Avaliação Diagnóstica"}
+                      </div>
+                      <div style={{fontSize:11,color:"var(--text-muted)",marginTop:2}}>
+                        {fmtData(resp.createdAt)}
+                        {" · "}{resp.tipoRespondente==="paciente"?"Próprio paciente":"Familiar / "+resp.parentesco}
+                        {" · "}{(resp.modulos||[]).length} módulo(s)
+                      </div>
+                    </div>
+                    <div style={{textAlign:"right"}}>
+                      {comCriterio.length>0
+                        ? <div style={{fontSize:12,fontWeight:700,color:"#dc2626"}}>⚠ {comCriterio.length} critério(s) atingido(s)</div>
+                        : <div style={{fontSize:12,fontWeight:700,color:"#16a34a"}}>✅ Abaixo dos limiares</div>
+                      }
+                      <div style={{fontSize:11,color:"var(--text-muted)",marginTop:2}}><Icon name={isOpen?"chevron-up":"chevron-down"} size={13}/></div>
+                    </div>
+                  </div>
+                  {isOpen&&(
+                    <div style={{padding:"0 16px 16px"}}>
+                      {resultados.map(r=>{
+                        const cor = r.cor||(r.nC>=r.minC?"#dc2626":r.nC>=Math.ceil((r.minC||3)*0.6)?"#d97706":"#16a34a");
+                        return(
+                          <div key={r.mod} style={{marginBottom:8,padding:"10px 12px",background:"#f9fafb",borderRadius:10,border:"1px solid #e5e7eb"}}>
+                            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
+                              <div style={{fontSize:12,fontWeight:700,color:"var(--text-dark)"}}>{r.label}</div>
+                              <div style={{fontSize:11,fontWeight:700,color:cor,whiteSpace:"nowrap"}}>{r.nC}/{r.total} C</div>
+                            </div>
+                            <div style={{fontSize:11,color:cor,marginTop:3}}>{r.status}</div>
+                            {r.obs&&<div style={{fontSize:10,color:"var(--text-muted)",marginTop:4,lineHeight:1.5}}>{r.obs}</div>}
+                          </div>
+                        );
+                      })}
+                      {resp.obsFinais&&(
+                        <div style={{marginTop:8,padding:"10px 12px",background:"#fffbeb",border:"1px solid #fcd34d",borderRadius:10,fontSize:12,color:"#78350f"}}>
+                          <strong>Observações:</strong> {resp.obsFinais}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
