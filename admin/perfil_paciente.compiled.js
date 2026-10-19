@@ -2216,6 +2216,8 @@ function AbaEvolucao({
   const [verTodoHistorico, setVerTodoHistorico] = useState(false);
   const [itemExpandido, setItemExpandido] = useState(null);
   const [rodas, setRodas] = useState([]);
+  const [rastrDiag, setRastrDiag] = useState([]);
+  const [rastrDiagAberto, setRastrDiagAberto] = useState(null);
   useEffect(() => {
     const u1 = db.collection("clinica_humor").where("pacienteId", "==", paciente.id).onSnapshot(snap => {
       const docs = snap.docs.map(d => ({
@@ -2293,6 +2295,14 @@ function AbaEvolucao({
         }
       });
       setRodas(uniq.slice(0, 10));
+    }).catch(() => {});
+    // Rastreamento Diagnóstico DSM-5
+    db.collection("clinica_rastreamento_diagnostico").where("pacienteNome", "==", paciente.nome).get().then(snap => {
+      const docs = snap.docs.map(d => ({
+        id: d.id,
+        ...d.data()
+      })).sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+      setRastrDiag(docs);
     }).catch(() => {});
     return () => {
       u1();
@@ -3024,6 +3034,149 @@ function AbaEvolucao({
         borderLeft: "3px solid var(--purple-soft,#f3e8ff)"
       }
     }, reg.resposta || "— sem resposta —")))));
+  }))), rastrDiag.length > 0 && /*#__PURE__*/React.createElement("div", {
+    className: "card",
+    style: {
+      marginTop: 16
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 600,
+      marginBottom: 14,
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center"
+    }
+  }, /*#__PURE__*/React.createElement("span", null, "🎯 Rastreamento Diagnóstico DSM-5"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 13,
+      color: "var(--text-muted)"
+    }
+  }, rastrDiag.length, " resposta(s)")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      flexDirection: "column",
+      gap: 10
+    }
+  }, rastrDiag.map(resp => {
+    const isOpen = rastrDiagAberto === resp.id;
+    const resultados = resp.resultados || [];
+    const comCriterio = resultados.filter(r => r.nC >= r.minC);
+    const fmtData = ts => ts?.seconds ? new Date(ts.seconds * 1000).toLocaleDateString("pt-BR") : "—";
+    return /*#__PURE__*/React.createElement("div", {
+      key: resp.id,
+      style: {
+        border: "1px solid #e5e7eb",
+        borderRadius: 12,
+        overflow: "hidden"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      onClick: () => setRastrDiagAberto(isOpen ? null : resp.id),
+      style: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "12px 16px",
+        cursor: "pointer",
+        background: isOpen ? "#f5f3ff" : "white"
+      }
+    }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontWeight: 700,
+        fontSize: 13,
+        color: "var(--text-dark)"
+      }
+    }, resp.grupoLabel || resp.grupo || "Avaliação Diagnóstica"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        color: "var(--text-muted)",
+        marginTop: 2
+      }
+    }, fmtData(resp.createdAt), " · ", resp.tipoRespondente === "paciente" ? "Próprio paciente" : "Familiar / " + resp.parentesco, " · ", (resp.modulos || []).length, " módulo(s)")), /*#__PURE__*/React.createElement("div", {
+      style: {
+        textAlign: "right"
+      }
+    }, comCriterio.length > 0 ? /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 12,
+        fontWeight: 700,
+        color: "#dc2626"
+      }
+    }, "⚠ ", comCriterio.length, " critério(s) atingido(s)") : /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 12,
+        fontWeight: 700,
+        color: "#16a34a"
+      }
+    }, "✅ Abaixo dos limiares"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        color: "var(--text-muted)",
+        marginTop: 2
+      }
+    }, /*#__PURE__*/React.createElement(Icon, {
+      name: isOpen ? "chevron-up" : "chevron-down",
+      size: 13
+    })))), isOpen && /*#__PURE__*/React.createElement("div", {
+      style: {
+        padding: "0 16px 16px"
+      }
+    }, resultados.map(r => {
+      const cor = r.cor || (r.nC >= r.minC ? "#dc2626" : r.nC >= Math.ceil((r.minC || 3) * 0.6) ? "#d97706" : "#16a34a");
+      return /*#__PURE__*/React.createElement("div", {
+        key: r.mod,
+        style: {
+          marginBottom: 8,
+          padding: "10px 12px",
+          background: "#f9fafb",
+          borderRadius: 10,
+          border: "1px solid #e5e7eb"
+        }
+      }, /*#__PURE__*/React.createElement("div", {
+        style: {
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 8
+        }
+      }, /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontSize: 12,
+          fontWeight: 700,
+          color: "var(--text-dark)"
+        }
+      }, r.label), /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontSize: 11,
+          fontWeight: 700,
+          color: cor,
+          whiteSpace: "nowrap"
+        }
+      }, r.nC, "/", r.total, " C")), /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontSize: 11,
+          color: cor,
+          marginTop: 3
+        }
+      }, r.status), r.obs && /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontSize: 10,
+          color: "var(--text-muted)",
+          marginTop: 4,
+          lineHeight: 1.5
+        }
+      }, r.obs));
+    }), resp.obsFinais && /*#__PURE__*/React.createElement("div", {
+      style: {
+        marginTop: 8,
+        padding: "10px 12px",
+        background: "#fffbeb",
+        border: "1px solid #fcd34d",
+        borderRadius: 10,
+        fontSize: 12,
+        color: "#78350f"
+      }
+    }, /*#__PURE__*/React.createElement("strong", null, "Observações:"), " ", resp.obsFinais)));
   }))), diario.length > 0 && /*#__PURE__*/React.createElement("div", {
     className: "card",
     style: {
