@@ -1847,6 +1847,22 @@ function Pacientes({
 
 // FINANCEIRO CLINICA
 // ── Relatório de Frequência (componente externo) ──────────────────────────
+// Abre a anotação TCC desta sessão no PsiCoWorking, onde o prontuário é guardado.
+// O link leva só códigos e o nome (nunca e-mail nem dados clínicos); o PsiCoWorking
+// acha o paciente pelo código e não cria sessão nem evento na agenda.
+function abrirProntuarioTCC(s) {
+  const q = new URLSearchParams({
+    prontuario: "1",
+    idAntigo: s.pacienteId || "",
+    nome: s.pacienteNome || "",
+    data: s.data || "",
+    hora: s.hora || "",
+    sessao: s.id || "",
+    pacote: s.pacoteId || ""
+  });
+  window.open("https://psicoworking.web.app/psi/admin/?" + q.toString(), "_blank", "noopener");
+}
+
 function RelatorioFrequencia({
   pacienteId,
   pacoteId,
@@ -2507,7 +2523,7 @@ ${Object.entries(sessMeses).sort(([a], [b]) => a.localeCompare(b)).map(([mes, se
         background: "var(--purple)",
         color: "white"
       }
-    }, ["", "Nº", "Data", "Presença", "Modalidade", "V. Sessão", "V. Pago", "Saldo", "Forma Pagto", "Data Pagto", "Obs"].map(h => /*#__PURE__*/React.createElement("th", {
+    }, ["", "Nº", "Data", "Presença", "Modalidade", "V. Sessão", "V. Pago", "Saldo", "Forma Pagto", "Data Pagto", "Obs", "Prontuário"].map(h => /*#__PURE__*/React.createElement("th", {
       key: h,
       style: {
         padding: "8px 10px",
@@ -2776,7 +2792,26 @@ ${Object.entries(sessMeses).sort(([a], [b]) => a.localeCompare(b)).map(([mes, se
           padding: "2px 5px",
           width: 70
         }
-      })));
+      })), /*#__PURE__*/React.createElement("td", {
+        style: {
+          padding: "6px 10px"
+        }
+      }, s.status === "realizado" && /*#__PURE__*/React.createElement("button", {
+        type: "button",
+        title: "Abrir a anotação desta sessão no PsiCoWorking",
+        onClick: () => abrirProntuarioTCC(s),
+        style: {
+          fontSize: 10,
+          fontWeight: 700,
+          color: "#7B00C4",
+          background: "white",
+          border: "1px solid #7B00C4",
+          borderRadius: 5,
+          padding: "3px 8px",
+          cursor: "pointer",
+          whiteSpace: "nowrap"
+        }
+      }, "Prontuário TCC")));
     })), /*#__PURE__*/React.createElement("tfoot", null, /*#__PURE__*/React.createElement("tr", {
       style: {
         background: "var(--purple-soft)"
@@ -2808,7 +2843,7 @@ ${Object.entries(sessMeses).sort(([a], [b]) => a.localeCompare(b)).map(([mes, se
       style: "currency",
       currency: "BRL"
     })), /*#__PURE__*/React.createElement("td", {
-      colSpan: 4
+      colSpan: 5
     }))))));
   }), modalExcluir && /*#__PURE__*/React.createElement("div", {
     style: {

@@ -739,6 +739,22 @@ function Pacientes({ user }) {
 
 // FINANCEIRO CLINICA
 // ── Relatório de Frequência (componente externo) ──────────────────────────
+// Abre a anotação TCC desta sessão no PsiCoWorking, onde o prontuário é guardado.
+// O link leva só códigos e o nome (nunca e-mail nem dados clínicos); o PsiCoWorking
+// acha o paciente pelo código e não cria sessão nem evento na agenda.
+function abrirProntuarioTCC(s) {
+  const q = new URLSearchParams({
+    prontuario: "1",
+    idAntigo: s.pacienteId || "",
+    nome: s.pacienteNome || "",
+    data: s.data || "",
+    hora: s.hora || "",
+    sessao: s.id || "",
+    pacote: s.pacoteId || ""
+  });
+  window.open("https://psicoworking.web.app/psi/admin/?" + q.toString(), "_blank", "noopener");
+}
+
 function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes, lancamentos, FORMAS, onVoltar}){
   // Normaliza IDs removendo espaços e garantindo string limpa
   const pidNorm = (pacienteId||"").trim();
@@ -1117,7 +1133,7 @@ ${Object.entries(sessMeses).sort(([a],[b])=>a.localeCompare(b)).map(([mes,sess])
                 <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
                   <thead>
                     <tr style={{background:"var(--purple)",color:"white"}}>
-                      {["","Nº","Data","Presença","Modalidade","V. Sessão","V. Pago","Saldo","Forma Pagto","Data Pagto","Obs"].map(h=>(
+                      {["","Nº","Data","Presença","Modalidade","V. Sessão","V. Pago","Saldo","Forma Pagto","Data Pagto","Obs","Prontuário"].map(h=>(
                         <th key={h} style={{padding:"8px 10px",textAlign:"left",fontWeight:600,whiteSpace:"nowrap",fontSize:11}}>{h}</th>
                       ))}
                     </tr>
@@ -1197,6 +1213,15 @@ ${Object.entries(sessMeses).sort(([a],[b])=>a.localeCompare(b)).map(([mes,sess])
                             <input defaultValue={s.obs||""} onBlur={e=>atualizarSessao(s.id,{obs:e.target.value})}
                               placeholder="—" style={{fontSize:10,border:"1px solid #e5e7eb",borderRadius:5,padding:"2px 5px",width:70}}/>
                           </td>
+                          <td style={{padding:"6px 10px"}}>
+                            {s.status==="realizado"&&(
+                              <button type="button" title="Abrir a anotação desta sessão no PsiCoWorking"
+                                onClick={()=>abrirProntuarioTCC(s)}
+                                style={{fontSize:10,fontWeight:700,color:"#7B00C4",background:"white",border:"1px solid #7B00C4",borderRadius:5,padding:"3px 8px",cursor:"pointer",whiteSpace:"nowrap"}}>
+                                Prontuário TCC
+                              </button>
+                            )}
+                          </td>
                         </tr>
                       );
                     })}
@@ -1206,7 +1231,7 @@ ${Object.entries(sessMeses).sort(([a],[b])=>a.localeCompare(b)).map(([mes,sess])
                       <td colSpan={5} style={{padding:"8px 10px",fontWeight:700,fontSize:11}}>Total {mesLabel}</td>
                       <td style={{padding:"8px 10px",fontWeight:700,fontSize:11}}>{sessMes.reduce((a,s)=>a+(parseFloat(s.valorSessao)||0),0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</td>
                       <td style={{padding:"8px 10px",fontWeight:700,fontSize:11,color:"#059669"}}>{recMes.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</td>
-                      <td colSpan={4}/>
+                      <td colSpan={5}/>
                     </tr>
                   </tfoot>
                 </table>
