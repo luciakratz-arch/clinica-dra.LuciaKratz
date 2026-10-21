@@ -14697,49 +14697,24 @@ function BuscaIASintomas({
     setErro("");
     setResultado(null);
     try {
-      const lista = recursos.map(r => `- [${r._tipo}] "${r.titulo || r.nome}" (${r.categoria || r.macroCategoria || ""}): ${r.descricao || r.moral || ""}`).join("\n");
-      const prompt = `Você é uma psicóloga clínica especialista em TCC, Musicoterapia e Neuromodulação.
-
-A psicóloga Dra. Lucia Kratz tem estes recursos terapêuticos disponíveis:
-${lista}
-
-A queixa/sintoma da paciente é: "${sintoma}"
-
-Selecione os 3 a 5 recursos mais indicados para esta queixa. Para cada um, informe:
-- O título exato (igual à lista)
-- Por que é indicado (1-2 frases clínicas)
-- Ordem sugerida de uso
-
-Responda APENAS em JSON válido, sem markdown, neste formato:
-{"recomendacoes":[{"titulo":"título exato","motivo":"justificativa clínica","ordem":1}]}`;
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-6",
-          max_tokens: 1000,
-          messages: [{
-            role: "user",
-            content: prompt
-          }]
-        })
-      });
-      const data = await res.json();
-      const texto = data.content?.[0]?.text || "";
-      const json = JSON.parse(texto);
-      // Cruzar com os recursos reais
-      const recomendados = json.recomendacoes.map(r => {
-        const recurso = recursos.find(x => (x.titulo || x.nome || "").toLowerCase() === r.titulo.toLowerCase());
-        return {
-          ...r,
-          recurso
-        };
-      }).filter(r => r.recurso);
-      setResultado(recomendados);
+      const norm = t => (t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9\s]/g, " ");
+      const COMUNS = ["que","com","uma","uns","umas","para","por","mais","muito","muita","muitos","tem","esta","esse","essa","isso","dos","das","nos","nas","seu","sua","ela","ele","como","quando","sem","mas","dele","dela","sobre","pela","pelo","fica","ficar"];
+      const palavras = [...new Set(norm(sintoma).split(/\s+/).filter(p => p.length >= 3 && !COMUNS.includes(p)))];
+      const pontuados = recursos.map(it => {
+        const nomeItem = it.titulo || it.nome || "";
+        const noTitulo = norm(nomeItem);
+        const corpus = norm([nomeItem, it.descricao, it.objetivo, it.moral, it.categoria, it.macroCategoria, Array.isArray(it.tags) ? it.tags.join(" ") : ""].join(" "));
+        const pontos = palavras.reduce((soma, p) => soma + (corpus.includes(p) ? 1 : 0) + (noTitulo.includes(p) ? 1 : 0), 0);
+        return { recurso: it, pontos };
+      }).filter(x => x.pontos > 0).sort((a, b) => b.pontos - a.pontos).slice(0, 6);
+      setResultado(pontuados.map((x, i) => ({
+        titulo: x.recurso.titulo || x.recurso.nome || "",
+        ordem: i + 1,
+        motivo: x.recurso.descricao || x.recurso.objetivo || x.recurso.moral || "Material relacionado à busca",
+        recurso: x.recurso
+      })));
     } catch (e) {
-      setErro("Erro ao consultar a IA. Tente novamente.");
+      setErro("Não foi possível concluir a busca. Tente novamente.");
     }
     setBuscando(false);
   }
@@ -14791,7 +14766,7 @@ Responda APENAS em JSON válido, sem markdown, neste formato:
       fontSize: 13,
       opacity: 0.85
     }
-  }, "Descreva a queixa da paciente e a IA recomenda os recursos mais indicados")), /*#__PURE__*/React.createElement("button", {
+  }, "Descreva a queixa da paciente e o sistema sugere os recursos mais indicados")), /*#__PURE__*/React.createElement("button", {
     onClick: onClose,
     style: {
       background: "rgba(255,255,255,0.2)",
@@ -14829,7 +14804,7 @@ Responda APENAS em JSON válido, sem markdown, neste formato:
     },
     onClick: buscar,
     disabled: buscando || !sintoma.trim()
-  }, buscando ? "🔍 Analisando com IA..." : "🔍 Buscar recursos indicados"), erro && /*#__PURE__*/React.createElement("div", {
+  }, buscando ? "🔍 Buscando..." : "🔍 Buscar recursos indicados"), erro && /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 12,
       padding: 12,

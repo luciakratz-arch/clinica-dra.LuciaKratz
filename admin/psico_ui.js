@@ -777,14 +777,23 @@ function BuscaIASintomaPsico({itens, onClose, onVer}){
     if(!sintoma.trim()) return;
     setBuscando(true); setErro(""); setResultado(null);
     try {
-      const lista = itens.map(r=>`- "${r.titulo}" (${r.categoria||""}): ${r.descricao||""}`).join("\n");
-      const prompt = `Você é uma psicóloga clínica especialista em TCC, Musicoterapia e Neuromodulação.\n\nA psicóloga Dra. Lucia Kratz tem estes materiais de psicoeducação disponíveis:\n${lista}\n\nA queixa/sintoma da paciente é: "${sintoma}"\n\nSelecione os 3 a 5 materiais mais indicados. Responda APENAS em JSON válido:\n{"recomendacoes":[{"titulo":"título exato","motivo":"justificativa clínica","ordem":1}]}`;
-      const res = await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,messages:[{role:"user",content:prompt}]})});
-      const data = await res.json();
-      const json = JSON.parse(data.content?.[0]?.text||"{}");
-      const recomendados = (json.recomendacoes||[]).map(r=>({...r,recurso:itens.find(x=>(x.titulo||"").toLowerCase()===r.titulo.toLowerCase())})).filter(r=>r.recurso);
-      setResultado(recomendados);
-    } catch(e){ setErro("Erro ao consultar a IA. Tente novamente."); }
+      const norm = t => (t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9\s]/g, " ");
+      const COMUNS = ["que","com","uma","uns","umas","para","por","mais","muito","muita","muitos","tem","esta","esse","essa","isso","dos","das","nos","nas","seu","sua","ela","ele","como","quando","sem","mas","dele","dela","sobre","pela","pelo","fica","ficar"];
+      const palavras = [...new Set(norm(sintoma).split(/\s+/).filter(p => p.length >= 3 && !COMUNS.includes(p)))];
+      const pontuados = itens.map(it => {
+        const nomeItem = it.titulo || it.nome || "";
+        const noTitulo = norm(nomeItem);
+        const corpus = norm([nomeItem, it.descricao, it.objetivo, it.moral, it.categoria, it.macroCategoria, Array.isArray(it.tags) ? it.tags.join(" ") : ""].join(" "));
+        const pontos = palavras.reduce((soma, p) => soma + (corpus.includes(p) ? 1 : 0) + (noTitulo.includes(p) ? 1 : 0), 0);
+        return { recurso: it, pontos };
+      }).filter(x => x.pontos > 0).sort((a, b) => b.pontos - a.pontos).slice(0, 6);
+      setResultado(pontuados.map((x, i) => ({
+        titulo: x.recurso.titulo || x.recurso.nome || "",
+        ordem: i + 1,
+        motivo: x.recurso.descricao || x.recurso.objetivo || x.recurso.moral || "Material relacionado à busca",
+        recurso: x.recurso
+      })));
+    } catch(e){ setErro("Não foi possível concluir a busca. Tente novamente."); }
     setBuscando(false);
   }
   return (
@@ -794,7 +803,7 @@ function BuscaIASintomaPsico({itens, onClose, onVer}){
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
             <div>
               <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:700,marginBottom:4}}>🧠 Busca por Sintoma</div>
-              <div style={{fontSize:13,opacity:0.85}}>Descreva a queixa e a IA recomenda os materiais mais indicados</div>
+              <div style={{fontSize:13,opacity:0.85}}>Descreva a queixa e o sistema sugere os materiais mais indicados</div>
             </div>
             <button onClick={onClose} style={{background:"rgba(255,255,255,0.2)",border:"none",color:"white",borderRadius:8,width:30,height:30,cursor:"pointer",fontSize:18}}>×</button>
           </div>
@@ -805,7 +814,7 @@ function BuscaIASintomaPsico({itens, onClose, onVer}){
             <TextAreaVoz className="form-input" rows={3} value={sintoma} onChange={e=>setSintoma(e.target.value)} placeholder="Ex: autocrítica severa, pensamentos negativos recorrentes..."/>
           </div>
           <button className="btn btn-purple" style={{width:"100%",justifyContent:"center"}} onClick={buscar} disabled={buscando||!sintoma.trim()}>
-            {buscando?"🔍 Analisando com IA...":"🔍 Buscar materiais indicados"}
+            {buscando?"🔍 Buscando...":"🔍 Buscar materiais indicados"}
           </button>
           {erro&&<div style={{marginTop:12,padding:12,background:"#fef2f2",border:"1px solid #fecaca",borderRadius:10,color:"#dc2626",fontSize:13}}>{erro}</div>}
           {resultado&&(
@@ -1144,14 +1153,23 @@ function RecursosTerapeuticos({ user }) {
       if(!sintoma.trim()) return;
       setBuscando(true); setErro(""); setResultado(null);
       try {
-        const lista = recursos.map(r=>`- "${r.titulo||r.nome}" (${r.categoria||""}): ${r.descricao||""}`).join("\n");
-        const prompt = `Você é uma psicóloga clínica especialista em TCC, Musicoterapia e Neuromodulação.\n\nA psicóloga Dra. Lucia Kratz tem estas ferramentas terapêuticas disponíveis:\n${lista}\n\nA queixa/sintoma da paciente é: "${sintoma}"\n\nSelecione as 3 a 5 ferramentas mais indicadas. Responda APENAS em JSON válido:\n{"recomendacoes":[{"titulo":"título exato","motivo":"justificativa clínica","ordem":1}]}`;
-        const res = await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,messages:[{role:"user",content:prompt}]})});
-        const data = await res.json();
-        const json = JSON.parse(data.content?.[0]?.text||"{}");
-        const recomendados=(json.recomendacoes||[]).map(r=>({...r,recurso:recursos.find(x=>(x.titulo||x.nome||"").toLowerCase()===r.titulo.toLowerCase())})).filter(r=>r.recurso);
-        setResultado(recomendados);
-      } catch(e){ setErro("Erro ao consultar a IA. Tente novamente."); }
+      const norm = t => (t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9\s]/g, " ");
+      const COMUNS = ["que","com","uma","uns","umas","para","por","mais","muito","muita","muitos","tem","esta","esse","essa","isso","dos","das","nos","nas","seu","sua","ela","ele","como","quando","sem","mas","dele","dela","sobre","pela","pelo","fica","ficar"];
+      const palavras = [...new Set(norm(sintoma).split(/\s+/).filter(p => p.length >= 3 && !COMUNS.includes(p)))];
+      const pontuados = recursos.map(it => {
+        const nomeItem = it.titulo || it.nome || "";
+        const noTitulo = norm(nomeItem);
+        const corpus = norm([nomeItem, it.descricao, it.objetivo, it.moral, it.categoria, it.macroCategoria, Array.isArray(it.tags) ? it.tags.join(" ") : ""].join(" "));
+        const pontos = palavras.reduce((soma, p) => soma + (corpus.includes(p) ? 1 : 0) + (noTitulo.includes(p) ? 1 : 0), 0);
+        return { recurso: it, pontos };
+      }).filter(x => x.pontos > 0).sort((a, b) => b.pontos - a.pontos).slice(0, 6);
+      setResultado(pontuados.map((x, i) => ({
+        titulo: x.recurso.titulo || x.recurso.nome || "",
+        ordem: i + 1,
+        motivo: x.recurso.descricao || x.recurso.objetivo || x.recurso.moral || "Material relacionado à busca",
+        recurso: x.recurso
+      })));
+    } catch(e){ setErro("Não foi possível concluir a busca. Tente novamente."); }
       setBuscando(false);
     }
     return (
@@ -1161,7 +1179,7 @@ function RecursosTerapeuticos({ user }) {
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
               <div>
                 <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:700,marginBottom:4}}>🧠 Busca por Sintoma</div>
-                <div style={{fontSize:13,opacity:0.85}}>Descreva a queixa e a IA recomenda as ferramentas mais indicadas</div>
+                <div style={{fontSize:13,opacity:0.85}}>Descreva a queixa e o sistema sugere as ferramentas mais indicadas</div>
               </div>
               <button onClick={onClose} style={{background:"rgba(255,255,255,0.2)",border:"none",color:"white",borderRadius:8,width:30,height:30,cursor:"pointer",fontSize:18}}>×</button>
             </div>
@@ -1172,7 +1190,7 @@ function RecursosTerapeuticos({ user }) {
               <TextAreaVoz className="form-input" rows={3} value={sintoma} onChange={e=>setSintoma(e.target.value)} placeholder="Ex: autocrítica severa, pensamentos negativos recorrentes..."/>
             </div>
             <button className="btn btn-purple" style={{width:"100%",justifyContent:"center"}} onClick={buscar} disabled={buscando||!sintoma.trim()}>
-              {buscando?"🔍 Analisando com IA...":"🔍 Buscar ferramentas indicadas"}
+              {buscando?"🔍 Buscando...":"🔍 Buscar ferramentas indicadas"}
             </button>
             {erro&&<div style={{marginTop:12,padding:12,background:"#fef2f2",border:"1px solid #fecaca",borderRadius:10,color:"#dc2626",fontSize:13}}>{erro}</div>}
             {resultado&&(
