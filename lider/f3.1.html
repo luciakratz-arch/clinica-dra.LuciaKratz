@@ -381,6 +381,21 @@ function fmtMedia(m){ return m===null?'—':m.toFixed(1); }
 
 function gerarDiag(){
   salvarEstadoAtual();
+  // Auto-salva no Firestore para preservar notas
+  var waEl = document.getElementById('wa-destino');
+  var waVal = (waEl?waEl.value:'').replace(/\D/g,'');
+  if(waVal.length >= 10){
+    var db = firebase.firestore();
+    var dados = {
+      participantes: JSON.stringify(participantes),
+      total_participantes: participantes.length,
+      nomes: participantes.map(function(p){return p.nome||'';}).filter(Boolean).join(', '),
+      setores: participantes.map(function(p){return p.setor||'';}).filter(Boolean).join(', '),
+      wa_destino: waEl.value.trim(),
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    db.collection('lider_f3_1').doc(waVal).set(dados).catch(function(){});
+  }
   var card = document.getElementById('diag-card');
   card.className='diag-card visible';
 
@@ -572,7 +587,10 @@ window.onload = function(){
 
   document.getElementById('wa-destino').addEventListener('blur', function(){
     var v = this.value.replace(/\D/g,'');
-    if(v.length >= 10) carregarDados(v);
+    if(v.length >= 10){
+      localStorage.setItem('lider_whatsapp', this.value);
+      carregarDados(v);
+    }
   });
 };
 
