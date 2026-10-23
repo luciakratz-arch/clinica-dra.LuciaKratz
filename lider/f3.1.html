@@ -211,11 +211,9 @@ function salvarEstadoAtual(){
   p.setor = v('setor_'+abaAtiva)||'';
   ITENS_HIG.forEach(function(it,i){
     p.hig[i].texto = v('hig_txt_'+abaAtiva+'_'+i)||'';
-    p.hig[i].nota  = parseInt(v('hig_nota_'+abaAtiva+'_'+i)||'0');
   });
   ITENS_MOT.forEach(function(it,i){
     p.mot[i].texto = v('mot_txt_'+abaAtiva+'_'+i)||'';
-    p.mot[i].nota  = parseInt(v('mot_nota_'+abaAtiva+'_'+i)||'0');
   });
 }
 function v(id){ var el=document.getElementById(id); return el?el.value:''; }
