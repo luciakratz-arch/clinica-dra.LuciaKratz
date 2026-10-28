@@ -14915,9 +14915,10 @@ function BuscaIASintomas({
 // ─── Tela cheia na horizontal para as fábulas em imagens ─────────────────────
 // No celular tenta travar a tela na horizontal (Android/Chrome); onde não dá (iPhone), gira a
 // imagem por conta própria para ocupar a tela toda do celular em pé. Girou o aparelho? Volta ao normal.
-function LeitorTelaCheiaPainel({paginas, idx, setIdx, onClose}) {
+function LeitorTelaCheiaPainel({paginas, idx, setIdx, onClose, legendas}) {
   const medir = () => ({w: window.innerWidth, h: window.innerHeight});
   const [tam, setTam] = React.useState(medir());
+  const [mostrarLeg, setMostrarLeg] = React.useState(true);
   React.useEffect(() => {
     // Sem requestFullscreen: o aviso "Para sair da tela cheia..." do navegador cobria a legenda.
     const atualizar = () => setTam(medir());
@@ -14935,9 +14936,11 @@ function LeitorTelaCheiaPainel({paginas, idx, setIdx, onClose}) {
     ? {position:"fixed", top:0, left:0, width:tam.h + "px", height:tam.w + "px", transformOrigin:"top left", transform:"rotate(90deg) translateY(-100%)"}
     : {position:"fixed", top:0, left:0, width:tam.w + "px", height:tam.h + "px"};
   const ultima = idx === paginas.length - 1;
+  const leg = (legendas || [])[idx] || "";
   const botao = {position:"absolute", top:"50%", transform:"translateY(-50%)", width:54, height:54, borderRadius:"50%", border:"none", background:"rgba(255,255,255,0.22)", color:"white", fontSize:26, cursor:"pointer"};
   return React.createElement("div", {style: Object.assign({background:"#000", zIndex:99999, display:"flex", alignItems:"center", justifyContent:"center"}, estilo)},
-    React.createElement("img", {src: paginas[idx], alt: "Painel " + (idx+1), style:{maxWidth:"100%", maxHeight:"100%", objectFit:"contain"}}),
+    React.createElement("img", {src: paginas[idx], alt: "Painel " + (idx+1), onClick: () => setMostrarLeg(v => !v), style:{maxWidth:"100%", maxHeight:"100%", objectFit:"contain"}}),
+    leg && mostrarLeg && React.createElement("div", {style:{position:"absolute", left:0, right:0, bottom:0, padding:"12px 76px 14px", background:"rgba(20,22,32,0.88)", color:"white", textAlign:"center", fontFamily:"Georgia,serif", fontSize: Math.max(14, Math.min(24, Math.round((emPe ? tam.w : tam.h) / 19))), lineHeight:1.45, pointerEvents:"none"}}, leg),
     React.createElement("button", {onClick: () => setIdx(i => Math.max(0, i - 1)), disabled: idx === 0, "aria-label": "Painel anterior", style: Object.assign({left:10, opacity: idx === 0 ? 0.25 : 1}, botao)}, "\u2039"),
     React.createElement("button", {onClick: () => setIdx(i => Math.min(paginas.length - 1, i + 1)), disabled: ultima, "aria-label": "Próximo painel", style: Object.assign({right:10, opacity: ultima ? 0.25 : 1}, botao)}, "\u203A"),
     React.createElement("div", {style:{position:"absolute", top:10, left:14, color:"rgba(255,255,255,0.8)", fontSize:13, fontFamily:"Inter,sans-serif"}}, (idx + 1) + "/" + paginas.length),
@@ -15056,13 +15059,16 @@ function FabulaCarousel({fabula, cat, pacienteId, onBack}) {
       )
     ),
 
+    // Texto da página em letra grande (fábulas com "legendas" separadas da imagem)
+    (fabula.legendas || [])[idx] && React.createElement("p", {style:{fontSize:17, lineHeight:1.65, color:"#3b3550", textAlign:"center", margin:"0 4px 16px", fontFamily:"Georgia,serif"}}, fabula.legendas[idx]),
+
     // Tela cheia na horizontal (letra e imagem bem maiores no celular)
     React.createElement("button", {
       className:"btn btn-outline",
       style:{width:"100%", marginBottom:12},
       onClick: () => setCheia(true)
     }, "Ver em tela cheia (horizontal)"),
-    cheia && React.createElement(LeitorTelaCheiaPainel, {paginas, idx, setIdx, onClose: () => setCheia(false)}),
+    cheia && React.createElement(LeitorTelaCheiaPainel, {paginas, idx, setIdx, legendas: fabula.legendas || [], onClose: () => setCheia(false)}),
 
     // Navegação por botões (próximo / anterior)
     React.createElement("div", {style:{display:"flex", gap:8, marginBottom:20}},
