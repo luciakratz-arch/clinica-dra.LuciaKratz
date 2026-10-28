@@ -29,6 +29,7 @@
     }
   } catch (e) {}
 
+const capitalizarNome = (n) => (n === n.toLowerCase() || n === n.toUpperCase()) ? n.charAt(0).toLocaleUpperCase("pt-BR") + n.slice(1).toLocaleLowerCase("pt-BR") : n;
   function escolher(genero, ano) {
     const lista = /^fem/i.test(genero || "") ? FEM : MASC;
     return { fundo: lista[ano % lista.length], mensagem: MENSAGENS[ano % MENSAGENS.length] };
@@ -56,7 +57,7 @@
     const ctx = c.getContext("2d");
     ctx.drawImage(img, 0, 0, 1080, 1350);
     const corTexto = /^#[0-9a-f]{6}$/i.test(cor || "") ? cor : "#6A2BD9";
-    const primeiro = String(nome || "").trim().split(/\s+/)[0] || "";
+    const primeiro = capitalizarNome(String(nome || "").trim().split(/\s+/)[0] || "");
     const corpoNome = primeiro.length <= 8 ? 104 : primeiro.length <= 12 ? 84 : 66;
     ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
     const txt = (t, y, peso, tam, cr, espaco) => {
@@ -104,7 +105,7 @@
     const arquivo = new File([jpg], nomeArq, { type: "image/jpeg" });
     const url = URL.createObjectURL(jpg);
     prev.style.cssText = ""; prev.innerHTML = '<img alt="Cartão de aniversário" style="width:100%;border-radius:12px;display:block" src="' + url + '">';
-    const primeiro = String(dados.nome || "").trim().split(/\s+/)[0];
+    const primeiro = capitalizarNome(String(dados.nome || "").trim().split(/\s+/)[0] || "");
     const texto = "Feliz aniversário, " + primeiro + "! " + (dados.assinatura || "");
 
     botao("Enviar pelo WhatsApp", "background:" + (dados.cor || "#6A2BD9") + ";color:#fff", async () => {
