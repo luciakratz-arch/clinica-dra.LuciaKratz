@@ -1918,50 +1918,8 @@ function FerramentaTreino({user}){
 }
 
 // ── Anamnese ────────────────────────────────────────────────────────────────
-// ─── Leitor de fábula em tela cheia, na horizontal ───────────────────────────
-// Aberto pelo botão "Ver em tela cheia" ou tocando na imagem. No celular tenta travar a tela
-// na horizontal (Android/Chrome); onde o aparelho não permite (iPhone), gira a imagem por
-// conta própria para ocupar a tela toda do celular em pé. Se a pessoa girar o aparelho, volta ao normal.
-function LeitorTelaCheia({ paginas, idx, setIdx, onAvancar, onClose, legendas }){
-  const medir = () => ({ w: window.innerWidth, h: window.innerHeight });
-  const [tam, setTam] = React.useState(medir());
-  const [mostrarLeg, setMostrarLeg] = React.useState(true);
-  React.useEffect(() => {
-    // Sem requestFullscreen: o aviso "Para sair da tela cheia..." do navegador cobria a legenda.
-    const atualizar = () => setTam(medir());
-    window.addEventListener("resize", atualizar);
-    window.addEventListener("orientationchange", atualizar);
-    return () => {
-      window.removeEventListener("resize", atualizar);
-      window.removeEventListener("orientationchange", atualizar);
-      try { screen.orientation.unlock(); } catch (e) {}
-      try { if (document.fullscreenElement) document.exitFullscreen(); } catch (e) {}
-    };
-  }, []);
-  const emPe = tam.h > tam.w;
-  const estilo = emPe
-    ? { position: "fixed", top: 0, left: 0, width: tam.h + "px", height: tam.w + "px", transformOrigin: "top left", transform: "rotate(90deg) translateY(-100%)" }
-    : { position: "fixed", top: 0, left: 0, width: tam.w + "px", height: tam.h + "px" };
-  const pag = paginas[idx] || "";
-  const ehImagem = /\.(jpg|jpeg|png|webp|gif)$/i.test(pag);
-  const ultima = idx === paginas.length - 1;
-  const leg = (legendas || [])[idx] || "";
-  const botao = { position: "absolute", top: "50%", transform: "translateY(-50%)", width: 54, height: 54, borderRadius: "50%", border: "none", background: "rgba(255,255,255,0.22)", color: "white", fontSize: 26, cursor: "pointer" };
-  return (
-    <div style={Object.assign({ background: "#000", zIndex: 99999, display: "flex", alignItems: "center", justifyContent: "center" }, estilo)}>
-      {ehImagem
-        ? <img src={pag} alt={"Painel " + (idx + 1)} onClick={() => setMostrarLeg(v => !v)} style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}/>
-        : <p style={{ color: "white", fontSize: 24, lineHeight: 1.7, textAlign: "center", padding: "0 60px", fontFamily: "Georgia,serif", fontStyle: "italic" }}>{pag}</p>}
-      {leg && mostrarLeg && (
-        <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, padding: "12px 76px 14px", background: "rgba(20,22,32,0.88)", color: "white", textAlign: "center", fontFamily: "Georgia,serif", fontSize: Math.max(14, Math.min(24, Math.round((emPe ? tam.w : tam.h) / 19))), lineHeight: 1.45, pointerEvents: "none" }}>{leg}</div>
-      )}
-      <button onClick={() => setIdx(i => Math.max(0, i - 1))} disabled={idx === 0} aria-label="Página anterior" style={Object.assign({ left: 10, opacity: idx === 0 ? 0.25 : 1 }, botao)}>‹</button>
-      <button onClick={() => { if (!ultima) onAvancar(); }} disabled={ultima} aria-label="Próxima página" style={Object.assign({ right: 10, opacity: ultima ? 0.25 : 1 }, botao)}>›</button>
-      <div style={{ position: "absolute", top: 10, left: 14, color: "rgba(255,255,255,0.8)", fontSize: 13, fontFamily: "Inter,sans-serif" }}>{idx + 1}/{paginas.length}</div>
-      <button onClick={onClose} aria-label="Fechar" style={{ position: "absolute", top: 8, right: 10, height: 40, padding: "0 16px", borderRadius: 20, border: "none", background: "rgba(255,255,255,0.22)", color: "white", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "Inter,sans-serif" }}>Fechar ✕</button>
-    </div>
-  );
-}
+// O leitor em tela cheia vive em admin/leitor_fabula.js (único para os três leitores de fábula).
+function LeitorTelaCheia(props){ return window.LeitorTelaCheiaFabula ? React.createElement(window.LeitorTelaCheiaFabula, props) : null; }
 
 function FerramentaPortal({ recurso, user }){
   const ALIAS = {
@@ -2078,7 +2036,7 @@ function FerramentaPortal({ recurso, user }){
           display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden"
         }}>
           {/\.(jpg|jpeg|png|webp|gif)$/i.test(pag)
-            ? <img src={pag} alt={"Painel "+(idx+1)} onClick={()=>setCheia(true)} style={{width:"100%",display:"block",borderRadius:14,maxHeight:480,objectFit:"contain",cursor:"zoom-in"}}/>
+            ? ((recurso.legendas||[])[idx]&&window.ImagemComLegenda) ? React.createElement(window.ImagemComLegenda,{src:pag,alt:"Painel "+(idx+1),legenda:recurso.legendas[idx],sobreFaixa:!!recurso.legendaSobreFaixa,onClick:()=>setCheia(true)}) : <img src={pag} alt={"Painel "+(idx+1)} onClick={()=>setCheia(true)} style={{width:"100%",display:"block",borderRadius:14,maxHeight:480,objectFit:"contain",cursor:"zoom-in"}}/>
             : <p style={{
                 fontSize:19,color:"white",lineHeight:1.9,textAlign:"center",
                 fontStyle:"italic",margin:0,
@@ -2086,14 +2044,13 @@ function FerramentaPortal({ recurso, user }){
               }}>{pag}</p>
           }
         </div>
-        {(recurso.legendas||[])[idx]&&(<p style={{fontSize:17,lineHeight:1.65,color:"#3b3550",textAlign:"center",margin:"0 4px 16px",fontFamily:"Georgia,serif"}}>{recurso.legendas[idx]}</p>)}
         {/\.(jpg|jpeg|png|webp|gif)$/i.test(pag)&&(
           <button onClick={()=>setCheia(true)}
             style={{width:"100%",padding:"12px",borderRadius:12,border:"1.5px solid #7B00C4",background:"#f5f3ff",color:"#7B00C4",fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"inherit",marginBottom:16}}>
             Ver em tela cheia (horizontal)
           </button>
         )}
-        {cheia&&<LeitorTelaCheia paginas={paginas} idx={idx} setIdx={setIdx} onAvancar={avancar} legendas={recurso.legendas||[]} onClose={()=>setCheia(false)}/>}
+        {cheia&&<LeitorTelaCheia paginas={paginas} idx={idx} setIdx={setIdx} onAvancar={avancar} legendas={recurso.legendas||[]} sobreFaixa={!!recurso.legendaSobreFaixa} onClose={()=>setCheia(false)}/>}
         {/* Reflexões no último slide */}
         {concluido&&(recurso.perguntas||[]).length>0&&(
           <div style={{background:"#f5f3ff",borderRadius:14,padding:"18px 20px",marginBottom:20,border:"1px solid #ede9fe"}}>
