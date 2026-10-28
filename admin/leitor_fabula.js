@@ -85,6 +85,17 @@
       h("button", { onClick: onClose, "aria-label": "Fechar", style: { position: "absolute", top: 8, right: 10, height: 40, padding: "0 16px", borderRadius: 20, border: "none", background: "rgba(255,255,255,0.22)", color: "white", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "Inter,sans-serif" } }, "Fechar ✕"));
   }
 
+  // Devolve os textos (legendas) de uma fábula: primeiro os do próprio documento; se não tiver, os do arquivo
+  // legendas_fabulas.js (procurados pelo título). `sobreFaixa` indica que a imagem ainda traz a faixa pequena antiga.
+  const norm = (t) => String(t || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+  window.legendasDaFabula = function (item) {
+    if (!item) return { legendas: [], sobreFaixa: false };
+    if (Array.isArray(item.legendas) && item.legendas.length > 0) return { legendas: item.legendas, sobreFaixa: !!item.legendaSobreFaixa };
+    const mapa = window.LEGENDAS_FABULAS || {};
+    const chave = Object.keys(mapa).find((k) => norm(k) === norm(item.titulo || item.nome));
+    return chave ? { legendas: mapa[chave], sobreFaixa: true } : { legendas: [], sobreFaixa: false };
+  };
+
   window.ImagemComLegenda = ImagemComLegenda;
   window.LeitorTelaCheiaFabula = LeitorTelaCheiaFabula;
 })();

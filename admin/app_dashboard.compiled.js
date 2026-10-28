@@ -435,7 +435,27 @@ function DashboardAdmin({
         whiteSpace: "nowrap"
       },
       target: "_blank"
-    }, "✉ Enviar e-mail"));
+    }, "✉ Enviar e-mail"), /*#__PURE__*/React.createElement("button", {
+      onClick: () => window.abrirCartaoAniversario && window.abrirCartaoAniversario({
+        nome: p.nome,
+        genero: p.genero,
+        telefone: p.telefone,
+        cor: "#7B00C4",
+        assinatura: "Dra. Lucia Kratz",
+        subtitulo: "Psicóloga · CRP 09/20590"
+      }),
+      style: {
+        fontSize: 11,
+        color: "white",
+        background: "#7B00C4",
+        padding: "5px 12px",
+        border: "none",
+        borderRadius: 20,
+        whiteSpace: "nowrap",
+        cursor: "pointer",
+        fontWeight: 600
+      }
+    }, "Cartão de aniversário"));
   }))), proximosAniv.length > 0 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
