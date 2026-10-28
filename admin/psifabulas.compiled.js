@@ -15544,7 +15544,18 @@ function AbaFabulas() {
         color: "var(--text-muted)",
         marginBottom: 8
       }
-    }, /*#__PURE__*/React.createElement("span", null, (f.paginas || []).length, " pág. · ", (f.perguntas || []).length, " reflexões"), /*#__PURE__*/React.createElement("span", {
+    }, /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("span", {
+      style: {
+        background: f.tipo === "carousel" ? "#7B00C4" : "#e5e7eb",
+        color: f.tipo === "carousel" ? "white" : "#6b7280",
+        borderRadius: 10,
+        padding: "2px 8px",
+        fontSize: 10,
+        fontWeight: 700,
+        marginRight: 6,
+        letterSpacing: "0.03em"
+      }
+    }, f.tipo === "carousel" ? "CARROSSEL" : "SÓ TEXTO"), (f.paginas || []).length, " pág. · ", (f.perguntas || []).length, " reflexões"), /*#__PURE__*/React.createElement("span", {
       style: {
         color: c.cor,
         fontWeight: 600,
