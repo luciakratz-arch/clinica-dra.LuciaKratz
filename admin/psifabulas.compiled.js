@@ -14912,11 +14912,52 @@ function BuscaIASintomas({
   }), " Ouvir / Assistir")))))));
 }
 // ── Carousel para fábulas com imagens ──────────────────────────────
+// ─── Tela cheia na horizontal para as fábulas em imagens ─────────────────────
+// No celular tenta travar a tela na horizontal (Android/Chrome); onde não dá (iPhone), gira a
+// imagem por conta própria para ocupar a tela toda do celular em pé. Girou o aparelho? Volta ao normal.
+function LeitorTelaCheiaPainel({paginas, idx, setIdx, onClose}) {
+  const medir = () => ({w: window.innerWidth, h: window.innerHeight});
+  const [tam, setTam] = React.useState(medir());
+  React.useEffect(() => {
+    try {
+      const el = document.documentElement;
+      if (el.requestFullscreen) {
+        el.requestFullscreen().then(() => {
+          try { screen.orientation.lock("landscape").catch(() => {}); } catch (e) {}
+        }).catch(() => {});
+      }
+    } catch (e) {}
+    const atualizar = () => setTam(medir());
+    window.addEventListener("resize", atualizar);
+    window.addEventListener("orientationchange", atualizar);
+    return () => {
+      window.removeEventListener("resize", atualizar);
+      window.removeEventListener("orientationchange", atualizar);
+      try { screen.orientation.unlock(); } catch (e) {}
+      try { if (document.fullscreenElement) document.exitFullscreen(); } catch (e) {}
+    };
+  }, []);
+  const emPe = tam.h > tam.w;
+  const estilo = emPe
+    ? {position:"fixed", top:0, left:0, width:tam.h + "px", height:tam.w + "px", transformOrigin:"top left", transform:"rotate(90deg) translateY(-100%)"}
+    : {position:"fixed", top:0, left:0, width:tam.w + "px", height:tam.h + "px"};
+  const ultima = idx === paginas.length - 1;
+  const botao = {position:"absolute", top:"50%", transform:"translateY(-50%)", width:54, height:54, borderRadius:"50%", border:"none", background:"rgba(255,255,255,0.22)", color:"white", fontSize:26, cursor:"pointer"};
+  return React.createElement("div", {style: Object.assign({background:"#000", zIndex:99999, display:"flex", alignItems:"center", justifyContent:"center"}, estilo)},
+    React.createElement("img", {src: paginas[idx], alt: "Painel " + (idx+1), style:{maxWidth:"100%", maxHeight:"100%", objectFit:"contain"}}),
+    React.createElement("button", {onClick: () => setIdx(i => Math.max(0, i - 1)), disabled: idx === 0, "aria-label": "Painel anterior", style: Object.assign({left:10, opacity: idx === 0 ? 0.25 : 1}, botao)}, "\u2039"),
+    React.createElement("button", {onClick: () => setIdx(i => Math.min(paginas.length - 1, i + 1)), disabled: ultima, "aria-label": "Próximo painel", style: Object.assign({right:10, opacity: ultima ? 0.25 : 1}, botao)}, "\u203A"),
+    React.createElement("div", {style:{position:"absolute", top:10, left:14, color:"rgba(255,255,255,0.8)", fontSize:13, fontFamily:"Inter,sans-serif"}}, (idx + 1) + "/" + paginas.length),
+    React.createElement("button", {onClick: onClose, "aria-label": "Fechar", style:{position:"absolute", top:8, right:10, height:40, padding:"0 16px", borderRadius:20, border:"none", background:"rgba(255,255,255,0.22)", color:"white", fontSize:14, fontWeight:700, cursor:"pointer", fontFamily:"Inter,sans-serif"}}, "Fechar \u2715")
+  );
+}
+
 function FabulaCarousel({fabula, cat, pacienteId, onBack}) {
   const [idx, setIdx] = useState(0);
   const [respostas, setRespostas] = useState({});
   const [salvando, setSalvando] = useState(false);
   const [salvo, setSalvo] = useState(false);
+  const [cheia, setCheia] = useState(false);
   const paginas = fabula.paginas || [];
   const perguntas = fabula.perguntas || [];
   const total = paginas.length;
@@ -14982,7 +15023,8 @@ function FabulaCarousel({fabula, cat, pacienteId, onBack}) {
         React.createElement("img", {
           src: paginas[idx],
           alt: "Painel " + (idx+1),
-          style: {width:"100%", display:"block", maxHeight:480, objectFit:"contain"}
+          onClick: () => setCheia(true),
+          style: {width:"100%", display:"block", maxHeight:480, objectFit:"contain", cursor:"zoom-in"}
         })
       ),
       // Seta esquerda
@@ -15020,6 +15062,14 @@ function FabulaCarousel({fabula, cat, pacienteId, onBack}) {
         idx + 1, " / ", total
       )
     ),
+
+    // Tela cheia na horizontal (letra e imagem bem maiores no celular)
+    React.createElement("button", {
+      className:"btn btn-outline",
+      style:{width:"100%", marginBottom:12},
+      onClick: () => setCheia(true)
+    }, "Ver em tela cheia (horizontal)"),
+    cheia && React.createElement(LeitorTelaCheiaPainel, {paginas, idx, setIdx, onClose: () => setCheia(false)}),
 
     // Navegação por botões (próximo / anterior)
     React.createElement("div", {style:{display:"flex", gap:8, marginBottom:20}},

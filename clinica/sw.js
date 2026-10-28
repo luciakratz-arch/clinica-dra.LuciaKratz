@@ -1,4 +1,4 @@
-const CACHE_NAME = 'lucia-kratz-v1';
+const CACHE_NAME = 'lucia-kratz-v2';
 const ASSETS = [
   './',
   './index.html',
