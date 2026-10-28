@@ -1926,14 +1926,7 @@ function LeitorTelaCheia({ paginas, idx, setIdx, onAvancar, onClose }){
   const medir = () => ({ w: window.innerWidth, h: window.innerHeight });
   const [tam, setTam] = React.useState(medir());
   React.useEffect(() => {
-    try {
-      const el = document.documentElement;
-      if (el.requestFullscreen) {
-        el.requestFullscreen().then(() => {
-          try { screen.orientation.lock("landscape").catch(() => {}); } catch (e) {}
-        }).catch(() => {});
-      }
-    } catch (e) {}
+    // Sem requestFullscreen: o aviso "Para sair da tela cheia..." do navegador cobria a legenda.
     const atualizar = () => setTam(medir());
     window.addEventListener("resize", atualizar);
     window.addEventListener("orientationchange", atualizar);
