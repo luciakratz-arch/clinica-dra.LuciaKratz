@@ -34,10 +34,10 @@
     }, [src]);
     const corte = sobreFaixa ? 0.155 : 0; // parte de baixo da imagem ocupada pela faixa antiga (máx. ~15,5%)
     const proporcao = nat ? nat.w + " / " + (nat.h * (1 - corte)) : "16 / 9";
-    return h("div", { style: { width: "100%", borderRadius: 14, overflow: "hidden", cursor: onClick ? "zoom-in" : "default", background: COR_FAIXA }, onClick },
+    return h("div", { style: { width: "100%", borderRadius: 14, overflow: "hidden", cursor: onClick ? "zoom-in" : "default", background: COR_FAIXA, containerType: "inline-size" }, onClick },
       h("div", { style: { position: "relative", width: "100%", aspectRatio: proporcao, overflow: "hidden", lineHeight: 0 } },
         h("img", { src, alt, style: { position: "absolute", top: 0, left: 0, width: "100%", display: "block" } })),
-      h("div", { style: { padding: "10px 14px 12px", textAlign: "center", color: "white", fontFamily: "'Segoe UI', Arial, sans-serif", fontSize: "clamp(13px, 3.9vw, 18px)", lineHeight: 1.45 } }, legenda));
+      h("div", { style: { padding: "10px 14px 12px", textAlign: "center", color: "white", fontFamily: "'Segoe UI', Arial, sans-serif", fontSize: "clamp(15px, 3.8cqw, 32px)", lineHeight: 1.45 } }, legenda));
   }
 
   // Tela cheia. Em pé, gira a imagem para ocupar a tela do celular; deitado, enche a tela. Toque na imagem esconde/mostra o texto.
