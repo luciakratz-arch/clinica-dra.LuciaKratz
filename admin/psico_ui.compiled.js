@@ -2374,12 +2374,16 @@ function BuscaIASintomaPsico({
     try {
       const norm = t => (t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9\s]/g, " ");
       const COMUNS = ["que","com","uma","uns","umas","para","por","mais","muito","muita","muitos","tem","esta","esse","essa","isso","dos","das","nos","nas","seu","sua","ela","ele","como","quando","sem","mas","dele","dela","sobre","pela","pelo","fica","ficar"];
-      const palavras = [...new Set(norm(sintoma).split(/\s+/).filter(p => p.length >= 3 && !COMUNS.includes(p)))];
+      const coletarTexto = (v, prof = 0) => { if (v == null || prof > 4) return ""; if (typeof v === "string") return /^https?:/i.test(v) ? "" : v; if (Array.isArray(v)) return v.map(x => coletarTexto(x, prof + 1)).join(" "); if (typeof v === "object") return Object.values(v).map(x => coletarTexto(x, prof + 1)).join(" "); return ""; };
+      const PARENTES = { heranca: ["partilha","inventario","irmao","irmaos","familia","pais","testamento"], vitima: ["injusti","ressentimento","magoa","culpa","queixa","versao","interpret"], famil: ["irmao","pais","filho","parente","casa"], confli: ["briga","discuss","disputa","desentend","rival","tensao"], briga: ["conflito","discuss","disputa","raiva"], ansied: ["preocupa","medo","tensao","angustia"], tristez: ["depress","luto","vazio","desanimo"], depres: ["tristeza","desanimo","vazio","luto"], raiva: ["irrita","agress","briga","explos"], culpa: ["arrepend","vergonha","autocritic","perdao"], luto: ["perda","saudade","tristeza","despedida"], medo: ["ansiedade","inseguran","panico","temor"], autoes: ["autocritic","inseguran","valor","confianca"], ciume: ["inseguran","traicao","confianca","posse"], separ: ["divorcio","fim","perda","luto"], traic: ["confianca","ciume","mentira","perdao"], perdao: ["magoa","ressentimento","culpa","rancor"], solid: ["isolamento","vazio","conexao","vinculo"], estres: ["sobrecarga","cansaco","trabalho","burnout"], comunic: ["escuta","dialogo","conversa","silencio"] };
+      const expandirPalavras = (lista) => { const extra = []; lista.forEach(p => Object.keys(PARENTES).forEach(k => { if (p.startsWith(k.slice(0, 5))) extra.push(...PARENTES[k]); })); return [...new Set([...lista, ...extra])]; };
+      const palavrasBase = [...new Set(norm(sintoma).split(/\s+/).filter(p => p.length >= 3 && !COMUNS.includes(p)))];
+      const palavras = expandirPalavras(palavrasBase);
       const pontuados = itens.map(it => {
         const nomeItem = it.titulo || it.nome || "";
         const noTitulo = norm(nomeItem);
-        const corpus = norm([nomeItem, it.descricao, it.objetivo, it.moral, it.categoria, it.macroCategoria, Array.isArray(it.tags) ? it.tags.join(" ") : ""].join(" "));
-        const pontos = palavras.reduce((soma, p) => soma + (corpus.includes(p) ? 1 : 0) + (noTitulo.includes(p) ? 1 : 0), 0);
+        const corpus = norm([nomeItem, it.descricao, it.objetivo, it.moral, it.categoria, it.macroCategoria, Array.isArray(it.tags) ? it.tags.join(" ") : "", coletarTexto(it)].join(" "));
+        const pontos = palavras.reduce((soma, p) => soma + ((corpus.includes(p) || (p.length >= 7 && corpus.includes(p.slice(0, p.length - 2))) ? 1 : 0) + (noTitulo.includes(p) ? 1 : 0)) * (palavrasBase.includes(p) ? 2 : 1), 0);
         return { recurso: it, pontos };
       }).filter(x => x.pontos > 0).sort((a, b) => b.pontos - a.pontos).slice(0, 6);
       setResultado(pontuados.map((x, i) => ({
@@ -3061,12 +3065,16 @@ function RecursosTerapeuticos({
       try {
       const norm = t => (t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9\s]/g, " ");
       const COMUNS = ["que","com","uma","uns","umas","para","por","mais","muito","muita","muitos","tem","esta","esse","essa","isso","dos","das","nos","nas","seu","sua","ela","ele","como","quando","sem","mas","dele","dela","sobre","pela","pelo","fica","ficar"];
-      const palavras = [...new Set(norm(sintoma).split(/\s+/).filter(p => p.length >= 3 && !COMUNS.includes(p)))];
+      const coletarTexto = (v, prof = 0) => { if (v == null || prof > 4) return ""; if (typeof v === "string") return /^https?:/i.test(v) ? "" : v; if (Array.isArray(v)) return v.map(x => coletarTexto(x, prof + 1)).join(" "); if (typeof v === "object") return Object.values(v).map(x => coletarTexto(x, prof + 1)).join(" "); return ""; };
+      const PARENTES = { heranca: ["partilha","inventario","irmao","irmaos","familia","pais","testamento"], vitima: ["injusti","ressentimento","magoa","culpa","queixa","versao","interpret"], famil: ["irmao","pais","filho","parente","casa"], confli: ["briga","discuss","disputa","desentend","rival","tensao"], briga: ["conflito","discuss","disputa","raiva"], ansied: ["preocupa","medo","tensao","angustia"], tristez: ["depress","luto","vazio","desanimo"], depres: ["tristeza","desanimo","vazio","luto"], raiva: ["irrita","agress","briga","explos"], culpa: ["arrepend","vergonha","autocritic","perdao"], luto: ["perda","saudade","tristeza","despedida"], medo: ["ansiedade","inseguran","panico","temor"], autoes: ["autocritic","inseguran","valor","confianca"], ciume: ["inseguran","traicao","confianca","posse"], separ: ["divorcio","fim","perda","luto"], traic: ["confianca","ciume","mentira","perdao"], perdao: ["magoa","ressentimento","culpa","rancor"], solid: ["isolamento","vazio","conexao","vinculo"], estres: ["sobrecarga","cansaco","trabalho","burnout"], comunic: ["escuta","dialogo","conversa","silencio"] };
+      const expandirPalavras = (lista) => { const extra = []; lista.forEach(p => Object.keys(PARENTES).forEach(k => { if (p.startsWith(k.slice(0, 5))) extra.push(...PARENTES[k]); })); return [...new Set([...lista, ...extra])]; };
+      const palavrasBase = [...new Set(norm(sintoma).split(/\s+/).filter(p => p.length >= 3 && !COMUNS.includes(p)))];
+      const palavras = expandirPalavras(palavrasBase);
       const pontuados = recursos.map(it => {
         const nomeItem = it.titulo || it.nome || "";
         const noTitulo = norm(nomeItem);
-        const corpus = norm([nomeItem, it.descricao, it.objetivo, it.moral, it.categoria, it.macroCategoria, Array.isArray(it.tags) ? it.tags.join(" ") : ""].join(" "));
-        const pontos = palavras.reduce((soma, p) => soma + (corpus.includes(p) ? 1 : 0) + (noTitulo.includes(p) ? 1 : 0), 0);
+        const corpus = norm([nomeItem, it.descricao, it.objetivo, it.moral, it.categoria, it.macroCategoria, Array.isArray(it.tags) ? it.tags.join(" ") : "", coletarTexto(it)].join(" "));
+        const pontos = palavras.reduce((soma, p) => soma + ((corpus.includes(p) || (p.length >= 7 && corpus.includes(p.slice(0, p.length - 2))) ? 1 : 0) + (noTitulo.includes(p) ? 1 : 0)) * (palavrasBase.includes(p) ? 2 : 1), 0);
         return { recurso: it, pontos };
       }).filter(x => x.pontos > 0).sort((a, b) => b.pontos - a.pontos).slice(0, 6);
       setResultado(pontuados.map((x, i) => ({
