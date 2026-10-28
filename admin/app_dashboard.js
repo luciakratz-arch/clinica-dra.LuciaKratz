@@ -1219,9 +1219,9 @@ ${Object.entries(sessMeses).sort(([a],[b])=>a.localeCompare(b)).map(([mes,sess])
                           </td>
                           <td style={{padding:"6px 10px"}}>
                             {s.status==="realizado"&&(
-                              <button type="button" title="Abrir a anotação desta sessão no PsiCoWorking"
+                              <button type="button" title={s.prontuarioTcc?"Prontuário preenchido: abrir a anotação no PsiCoWorking":"Abrir a anotação desta sessão no PsiCoWorking"}
                                 onClick={()=>abrirProntuarioTCC(s)}
-                                style={{fontSize:10,fontWeight:700,color:"#7B00C4",background:"white",border:"1px solid #7B00C4",borderRadius:5,padding:"3px 8px",cursor:"pointer",whiteSpace:"nowrap"}}>
+                                style={{fontSize:10,fontWeight:700,color:s.prontuarioTcc?"#FFFFFF":"#7B00C4",background:s.prontuarioTcc?"#16A34A":"white",border:s.prontuarioTcc?"1px solid #15803D":"1px solid #7B00C4",borderRadius:5,padding:"3px 8px",cursor:"pointer",whiteSpace:"nowrap"}}>
                                 Prontuário TCC
                               </button>
                             )}
