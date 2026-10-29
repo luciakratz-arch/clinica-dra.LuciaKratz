@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Avaliação Diagnóstica | Dra. Lucia Kratz</title>
+<title>Questionário Clínico | Dra. Lucia Kratz</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -606,14 +606,14 @@ function render() {
     return;
   }
   if (etapa === "erro") {
-    app.innerHTML = `<div class="header"><h1>Avaliação Diagnóstica</h1><p>Dra. Lucia Kratz · CRP 09/20590</p></div><div class="erro-box">❌ Link inválido ou expirado.<br/>Solicite um novo link à Dra. Lucia Kratz.</div>`;
+    app.innerHTML = `<div class="header"><h1>Questionário Clínico</h1><p>Dra. Lucia Kratz · CRP 09/20590</p></div><div class="erro-box">❌ Link inválido ou expirado.<br/>Solicite um novo link à Dra. Lucia Kratz.</div>`;
     return;
   }
   if (etapa === "jaRespondeu") {
     app.innerHTML = `
       <div class="header">
         <img src="../../logo.png" style="width:60px;height:60px;border-radius:12px;object-fit:cover" onerror="this.style.display='none'"/>
-        <h1>${CONFIG.grupoLabel || "Avaliação Diagnóstica"}</h1>
+        <h1>Questionário Clínico</h1>
         <p>Dra. Lucia Kratz · CRP 09/20590</p>
       </div>
       <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:14px;padding:24px;text-align:center;color:#166534;font-size:14px;line-height:1.7">
@@ -631,7 +631,7 @@ function renderInicio(app) {
   app.innerHTML = `
     <div class="header">
       <img src="../../logo.png" style="width:60px;height:60px;border-radius:12px;object-fit:cover" onerror="this.style.display='none'"/>
-      <h1>${CONFIG.grupoLabel || "Avaliação Diagnóstica"}</h1>
+      <h1>Questionário Clínico</h1>
       <p>Dra. Lucia Kratz · Psicóloga · CRP 09/20590</p>
     </div>
     <div class="welcome-box">
