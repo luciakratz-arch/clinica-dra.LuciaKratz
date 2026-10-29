@@ -584,3 +584,23 @@ table {
   flex-shrink: 0;
   white-space: nowrap;
 }
+
+/* ── CELULAR: cartões com ações (alunos, etc.) ─────────────────
+   Em tela estreita, o nome ocupa a largura toda ao lado do avatar
+   e os botões descem para a linha de baixo, sem espremer o texto. */
+@media (max-width: 640px) {
+  .main-content .card[style*="border-left"] {
+    flex-wrap: wrap !important;
+    padding: 14px !important;
+    gap: 10px 12px !important;
+  }
+  .main-content .card[style*="border-left"] > div:nth-child(2) {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    overflow-wrap: anywhere;
+  }
+  .main-content .card[style*="border-left"] > div:last-child {
+    flex: 1 1 100% !important;
+    justify-content: flex-start !important;
+  }
+}
