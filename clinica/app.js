@@ -19,6 +19,21 @@ const db = firebase.firestore();
 const LOGO_URL = "../logo-transparente.png";
 const SITE_URL  = "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz";
 
+// Link que o aluno envia ao paciente: cria o registro que a página /ferramentas/ sabe abrir
+// (sem senha, direto na atividade). Devolve o endereço pronto para copiar ou mandar no WhatsApp.
+async function criarLinkPublico({ recurso, ferramenta, label, pacienteId, pacienteNome, token }){
+  const col = recurso && recurso._colecao;
+  const tipo = col==="fabulas" ? "fabula" : col==="psicoeducacao" ? "psicoeducacao" : "ferramenta";
+  const recursoId = tipo==="ferramenta" ? (ferramenta || (recurso&&recurso.id) || "") : ((recurso&&recurso.id) || ferramenta || "");
+  await db.collection("clinica_links_partilhados").add({
+    pacienteId: pacienteId||"", pacienteNome: pacienteNome||"",
+    tipoFerramenta: tipo+":"+recursoId, nomeRecurso: label||"",
+    tipo, token, status:"pendente",
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  });
+  return SITE_URL+"/ferramentas/?token="+token;
+}
+
 // ─── LOG DE USO DE RECURSOS ─────────────────────────────
 // Registra quando a paciente ABRE um recurso e quando SALVA algo.
 // Alimenta o relatório "Uso de Recursos" na Evolução do admin.
@@ -2999,7 +3014,7 @@ function FerramentasAluno({ user }) {
     setLinkSalvando(true);
     const token = Math.random().toString(36).slice(2,10).toUpperCase();
     const label = linkModal.titulo||linkModal.nome||"—";
-    const url = SITE_URL+"/clinica/?link="+token;
+    const url = await criarLinkPublico({recurso:linkModal, ferramenta:linkModal.formularioKey||linkModal.id, label, pacienteId:pac?pac.id:"", pacienteNome:pac?pac.nome:"", token});
     const baseData = {
       alunoId:user.id, alunoNome:user.nome,
       token, ferramenta:linkModal.formularioKey||linkModal.id, ferramentaLabel:label,
@@ -5465,7 +5480,7 @@ function DetalhePacienteAluno({ user, paciente, onVoltar }) {
     const token = Math.random().toString(36).slice(2,10).toUpperCase();
     const recurso = catalogo.find(c=>(c.formularioKey||c.id)===ferramenta);
     const label = recurso?(recurso.titulo||recurso.nome||ferramenta):ferramenta;
-    const url = (typeof SITE_URL!=="undefined"?SITE_URL:"https://luciakratz-arch.github.io/clinica-dra.LuciaKratz")+"/clinica/?link="+token;
+    const url = await criarLinkPublico({recurso, ferramenta, label, pacienteId:paciente.id, pacienteNome:paciente.nome, token});
     await db.collection("acad_links").add({
       alunoId: user.id, alunoNome: user.nome,
       pacienteId: paciente.id, pacienteNome: paciente.nome,
@@ -5719,10 +5734,11 @@ function LinkCompartilhavel({ user }) {
     const token = Math.random().toString(36).slice(2,10).toUpperCase();
     const recurso = catalogo.find(c=>(c.formularioKey||c.id)===ferramenta);
     const label = recurso ? (recurso.titulo||recurso.nome||ferramenta) : ferramenta;
+    const url = await criarLinkPublico({recurso, ferramenta, label, pacienteId:"", pacienteNome:descricao, token});
     await db.collection("clinica_aluno_links").add({
       alunoId:user.id, alunoNome:user.nome,
       token, ferramenta, ferramentaLabel:label, descricao,
-      url:`${SITE_URL}/clinica/?link=${token}`,
+      url,
       usos:0, createdAt:firebase.firestore.FieldValue.serverTimestamp()
     });
     setDescricao(""); setMostrarForm(false); setSalvando(false);
