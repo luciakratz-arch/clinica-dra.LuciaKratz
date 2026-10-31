@@ -3665,7 +3665,7 @@ function Sidebar({ user, tab, setTab, onLogout, modo, onTrocarModo, notifProps, 
         <a href="../admin/" className="nav-item" style={{color:"rgba(255,255,255,0.85)",background:"rgba(123,0,196,0.25)",borderRadius:8,marginBottom:2,textDecoration:"none"}}>
           <Icon name="settings" size={18}/> Área Administrativa
         </a>
-        <a href={SITE_URL} className="nav-item" style={{color:"rgba(255,255,255,0.6)",textDecoration:"none"}}>
+        <a href="https://luciakratz.com.br" className="nav-item" style={{color:"rgba(255,255,255,0.6)",textDecoration:"none"}}>
           <Icon name="arrow-left" size={18}/> Voltar ao site
         </a>
         <BotaoInstalarPWA/>
@@ -3907,7 +3907,7 @@ function Login({ onLogin }) {
             </div>
             <div className="login-footer" style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8}}>
               <span>Plataforma protegida · Dra. Lucia Kratz · CRP 09/20590</span>
-              <a href={SITE_URL} style={{color:"var(--purple)",fontSize:13}}>← Voltar ao site</a>
+              <a href="https://luciakratz.com.br" style={{color:"var(--purple)",fontSize:13}}>← Voltar ao site</a>
             </div>
           </>
         )}
