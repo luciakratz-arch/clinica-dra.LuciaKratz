@@ -284,10 +284,9 @@ footer{text-align:center;padding:28px 24px;font-size:0.76rem;color:var(--cinza);
       </div>
 
       <div class="form-step" data-step="5">
-        <div class="form-q">Você tem disponibilidade de investimento de R$ 150,00 para realizar essa consulta?</div>
-        <div class="form-info-disc">Este valor já é especial para leitores do livro — o valor regular da consulta é R$ 250,00.</div>
+        <div class="form-q">Você gostaria de receber o contato da Dra. Lucia pelo WhatsApp para combinar valores e horários?</div>
         <div class="form-opts">
-          <div class="form-opt" data-inv="sim" onclick="selOpt(this)">Sim, tenho disponibilidade</div>
+          <div class="form-opt" data-inv="sim" onclick="selOpt(this)">Sim, quero receber o contato</div>
           <div class="form-opt" data-inv="nao" onclick="selOpt(this)">Não no momento</div>
         </div>
         <button class="form-next" onclick="nextStep(5)" disabled>Próxima →</button>
@@ -406,7 +405,7 @@ function finalizarNao() {
       '2. Tempo: ' + encodeURIComponent(respostas.p2 || '') + '%0A' +
       '3. Terapia: ' + encodeURIComponent(respostas.p3 || '') + '%0A' +
       '4. Objetivo: ' + encodeURIComponent(respostas.p4 || '') + '%0A' +
-      'Investimento: Não disponível no momento%0A' +
+      'Contato para combinar valores: não no momento%0A' +
       'Aceita receber materiais: SIM';
     window.open('https://wa.me/5562994644950?text=' + waMsg, '_blank');
   } else {
@@ -422,7 +421,7 @@ function enviarForm() {
   msg += '2. Tempo na situação: ' + encodeURIComponent(respostas.p2 || '') + '%0A';
   msg += '3. Experiência com terapia: ' + encodeURIComponent(respostas.p3 || '') + '%0A';
   msg += '4. O que espero: ' + encodeURIComponent(respostas.p4 || '') + '%0A';
-  msg += '5. Investimento: R$ 150,00 - SIM%0A';
+  msg += '5. Quero receber o contato para combinar valores e horários: SIM%0A';
   msg += '6. Formato preferido: ' + encodeURIComponent(respostas.p6 || '');
   window.open('https://wa.me/5562994644950?text=' + msg, '_blank');
 }
