@@ -3810,15 +3810,33 @@ function Login({ onLogin }) {
     { id:"paciente", nome:"Sou Paciente", desc:"Portal do paciente — ferramentas e acompanhamento", icon:"user" },
   ];
 
+  const WHATSAPP_AJUDA = "5562994644950";
+  function normNome(t) {
+    return (t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim().toLowerCase();
+  }
+  function pedirAjudaLogin() {
+    const msg = encodeURIComponent("Olá! Sou paciente e não consegui entrar na Área do Paciente." + (nome.trim() ? " Meu nome: " + nome.trim() + "." : "") + " Pode me ajudar, por favor?");
+    window.open("https://wa.me/" + WHATSAPP_AJUDA + "?text=" + msg, "_blank");
+  }
+
   async function handleLoginPaciente(e) {
     e.preventDefault(); setErro(""); setLoading(true);
     try {
-      if (senha !== "1234") { setErro("Senha incorreta."); setLoading(false); return; }
-      const nomeNorm = nome.trim().toLowerCase();
+      const nomeNorm = normNome(nome);
       if (!nomeNorm) { setErro("Digite seu nome completo."); setLoading(false); return; }
+      if (senha.trim() !== "1234") { setErro("Senha incorreta. Se não souber a senha, toque em \"Não consigo entrar\" abaixo."); setLoading(false); return; }
       const snap = await db.collection("clinica_pacientes").get();
-      const match = snap.docs.find(d => (d.data().nome||"").trim().toLowerCase() === nomeNorm);
-      if (!match) { setErro("Paciente não encontrado. Verifique o nome completo."); setLoading(false); return; }
+      // 1º: nome igual (sem acento, sem diferença de maiúsculas ou espaços). 2º: todas as palavras digitadas estão no nome cadastrado.
+      let achados = snap.docs.filter(d => normNome(d.data().nome) === nomeNorm);
+      if (achados.length === 0) {
+        const palavras = nomeNorm.split(" ").filter(Boolean);
+        if (palavras.length >= 2) {
+          achados = snap.docs.filter(d => { const p = normNome(d.data().nome).split(" "); return palavras.every(w => p.includes(w)); });
+        }
+      }
+      if (achados.length === 0) { setErro("Não encontramos esse nome. Digite como está no seu cadastro ou toque em \"Não consigo entrar\" abaixo."); setLoading(false); return; }
+      if (achados.length > 1) { setErro("Encontramos mais de um cadastro com esse nome. Digite seu nome completo."); setLoading(false); return; }
+      const match = achados[0];
       const pac = { id: match.id, ...match.data() };
       if (pac.status === "inativo") { setErro("Conta inativa. Entre em contato com a psicóloga."); setLoading(false); return; }
       onLogin({ tipo:"paciente", ...pac });
@@ -3932,6 +3950,7 @@ function Login({ onLogin }) {
                 <input className="form-input" type="password" value={senha} onChange={e=>setSenha(e.target.value)} placeholder="••••••••"/>
               </div>
               <button className="btn-primary" type="submit" disabled={loading}>{loading?"Entrando...":"Entrar"}</button>
+              <button type="button" onClick={pedirAjudaLogin} style={{background:"none",border:"none",color:"var(--purple, #7B00C4)",cursor:"pointer",fontSize:13,marginTop:12,textDecoration:"underline"}}>Não consigo entrar / esqueci minha senha</button>
             </form>
           </>
         )}
