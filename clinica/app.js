@@ -3844,6 +3844,27 @@ function Login({ onLogin }) {
     setLoading(false);
   }
 
+  // Entrar com o Google: vale para quem tem no cadastro o MESMO e-mail da conta Google
+  async function handleLoginGoogle() {
+    setErro(""); setLoading(true);
+    try {
+      const cred = await firebase.auth().signInWithPopup(new firebase.auth.GoogleAuthProvider());
+      const mail = (cred.user.email || "").trim().toLowerCase();
+      if (!cred.user.emailVerified || !mail) { await firebase.auth().signOut(); setErro("Não foi possível confirmar o e-mail desta conta Google."); setLoading(false); return; }
+      const snap = await db.collection("clinica_pacientes").get();
+      const achados = snap.docs.filter(d => ((d.data().email || "") + "").trim().toLowerCase() === mail);
+      await firebase.auth().signOut();     // o sistema usa só o e-mail para reconhecer o cadastro
+      if (achados.length === 0) { setErro("Este e-mail do Google não está no seu cadastro. Entre com nome e senha ou toque em \"Não consigo entrar\" abaixo."); setLoading(false); return; }
+      if (achados.length > 1) { setErro("Há mais de um cadastro com este e-mail. Entre com o nome completo e a senha."); setLoading(false); return; }
+      const pac = { id: achados[0].id, ...achados[0].data() };
+      if (pac.status === "inativo") { setErro("Conta inativa. Entre em contato com a psicóloga."); setLoading(false); return; }
+      onLogin({ tipo:"paciente", ...pac });
+    } catch(err) {
+      if (err && err.code !== "auth/popup-closed-by-user" && err.code !== "auth/cancelled-popup-request") setErro("Não foi possível entrar com o Google. Tente de novo.");
+    }
+    setLoading(false);
+  }
+
   async function handleLoginAluno(e) {
     e.preventDefault(); setErro(""); setLoading(true);
     try {
@@ -3950,6 +3971,8 @@ function Login({ onLogin }) {
                 <input className="form-input" type="password" value={senha} onChange={e=>setSenha(e.target.value)} placeholder="••••••••"/>
               </div>
               <button className="btn-primary" type="submit" disabled={loading}>{loading?"Entrando...":"Entrar"}</button>
+              <div style={{textAlign:"center",fontSize:12,color:"var(--text-muted)",margin:"14px 0 8px"}}>ou</div>
+              <button type="button" className="btn-primary" onClick={handleLoginGoogle} disabled={loading} style={{background:"#fff",color:"#111827",border:"1px solid #d1d5db"}}>Entrar com Google</button>
               <button type="button" onClick={pedirAjudaLogin} style={{background:"none",border:"none",color:"var(--purple, #7B00C4)",cursor:"pointer",fontSize:13,marginTop:12,textDecoration:"underline"}}>Não consigo entrar / esqueci minha senha</button>
             </form>
           </>
