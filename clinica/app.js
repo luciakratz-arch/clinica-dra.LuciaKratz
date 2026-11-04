@@ -2014,16 +2014,18 @@ function FerramentaPortal({ recurso, user }){
         return n;
       });
     }
+    const opcoesFab = (i)=> (recurso.perguntasOpcoes&&Array.isArray(recurso.perguntasOpcoes[i]))?recurso.perguntasOpcoes[i]:[];
+    const textoFab = (i)=>{ const m=Array.isArray(respFab["op"+i])?respFab["op"+i]:[]; return (m.length?"Marcados: "+m.join("; ")+". ":"")+(respFab[i]||""); };
     async function salvarReflexoesFabula(){
       const perguntas = recurso.perguntas||[];
-      if(!perguntas.some((_,i)=>(respFab[i]||"").trim())){alert("Escreva pelo menos uma reflexão antes de salvar.");return;}
+      if(!perguntas.some((_,i)=>textoFab(i).trim())){alert("Escreva pelo menos uma reflexão antes de salvar.");return;}
       if(user&&user.id){
         try{
           await db.collection("clinica_reflexoes").add({
             pacienteId:user.id, pacienteNome:user.nome||"",
             origem:"fabula",
             origemId:recurso.id||"", origemTitulo:recurso.titulo||recurso.nome||"",
-            registros:perguntas.map((p,i)=>({pergunta:p, resposta:respFab[i]||""})),
+            registros:perguntas.map((p,i)=>({pergunta:p, resposta:textoFab(i).trim()})),
             data:new Date().toLocaleDateString("pt-BR"),
             createdAt:firebase.firestore.FieldValue.serverTimestamp()
           });
@@ -2078,9 +2080,23 @@ function FerramentaPortal({ recurso, user }){
                   <span style={{color:"#a855f7",fontWeight:700,flexShrink:0}}>{i+1}.</span>
                   <span style={{fontSize:14,color:"#374151",lineHeight:1.7}}>{q}</span>
                 </div>
+                {opcoesFab(i).length>0&&(
+                  <div style={{margin:"4px 0 10px",display:"grid",gap:6}}>
+                    {opcoesFab(i).map(o=>{
+                      const m=Array.isArray(respFab["op"+i])?respFab["op"+i]:[];
+                      return (
+                        <label key={o} style={{display:"flex",gap:8,alignItems:"flex-start",fontSize:13,color:"#374151"}}>
+                          <input type="checkbox" style={{marginTop:3}} checked={m.includes(o)}
+                            onChange={e=>setRespFab(r=>{const at=Array.isArray(r["op"+i])?r["op"+i]:[]; return {...r,["op"+i]:e.target.checked?[...at,o]:at.filter(x=>x!==o)};})}/>
+                          {o}
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
                 <TextAreaVoz value={respFab[i]||""}
                   onChange={e=>setRespFab(r=>({...r,[i]:e.target.value}))}
-                  placeholder="Escreva sua reflexão..."
+                  placeholder={opcoesFab(i).length?"O que pode acontecer se você continuar ignorando esses avisos?":"Escreva sua reflexão..."}
                   style={{width:"100%",minHeight:64,padding:"8px 10px",borderRadius:8,
                     border:"1px solid #7B00C450",fontSize:13,fontFamily:"Inter,sans-serif",
                     resize:"vertical",lineHeight:1.5,boxSizing:"border-box",outline:"none"}}/>
