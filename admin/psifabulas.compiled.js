@@ -14936,6 +14936,18 @@ function FabulaCarousel({fabula, cat, pacienteId, onBack}) {
     touchStart.current = null;
   }
 
+  const opcoesPerg = (i) => (fabula.perguntasOpcoes && Array.isArray(fabula.perguntasOpcoes[i])) ? fabula.perguntasOpcoes[i] : [];
+  function respostasFinal() {
+    const out = {};
+    Object.keys(respostas).forEach(k => { if (k.indexOf("op") !== 0) out[k] = respostas[k]; });
+    Object.keys(respostas).forEach(k => {
+      if (k.indexOf("op") === 0 && Array.isArray(respostas[k]) && respostas[k].length) {
+        const i = k.slice(2);
+        out[i] = "Marcados: " + respostas[k].join("; ") + ". " + (out[i] || "");
+      }
+    });
+    return out;
+  }
   async function salvarReflexoes() {
     if (!pacienteId) return;
     setSalvando(true);
@@ -14945,7 +14957,7 @@ function FabulaCarousel({fabula, cat, pacienteId, onBack}) {
         tipo: "fabula",
         fabulaId: fabula.id,
         titulo: fabula.titulo,
-        respostas,
+        respostas: respostasFinal(),
         criadoEm: firebase.firestore.FieldValue.serverTimestamp()
       });
       setSalvo(true);
@@ -15073,9 +15085,16 @@ function FabulaCarousel({fabula, cat, pacienteId, onBack}) {
           }}, i+1),
           React.createElement("p", {style:{fontSize:13, lineHeight:1.6, color:"var(--gray-700)", margin:0}}, p)
         ),
+        // Itens para marcar (quando a pergunta tem opções)
+        opcoesPerg(i).length > 0 && React.createElement("div", {style:{margin:"0 0 10px 36px", display:"grid", gap:6}},
+          opcoesPerg(i).map(o => React.createElement("label", {key:o, style:{display:"flex", gap:8, alignItems:"flex-start", fontSize:13, color:"var(--gray-700)", cursor:"pointer"}},
+            React.createElement("input", {type:"checkbox", style:{marginTop:3},
+              checked: (Array.isArray(respostas["op"+i]) ? respostas["op"+i] : []).includes(o),
+              onChange: e => setRespostas(r => { const at = Array.isArray(r["op"+i]) ? r["op"+i] : []; return {...r, ["op"+i]: e.target.checked ? [...at, o] : at.filter(x => x !== o)}; })
+            }), o))),
         // Campo de resposta com voz
         React.createElement(TextAreaVoz, {
-          placeholder: "Escreva sua reflexão aqui...",
+          placeholder: opcoesPerg(i).length ? "O que pode acontecer se você continuar ignorando esses avisos?" : "Escreva sua reflexão aqui...",
           value: respostas[i] || "",
           onChange: v => setRespostas(r => ({...r, [i]: v})),
           rows: 3

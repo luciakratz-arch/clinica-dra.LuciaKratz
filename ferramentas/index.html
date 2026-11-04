@@ -297,6 +297,8 @@ function FabulaPublica({fabula,user,onConcluido}){
   const [cheia,setCheia]=useState(false);
   const paginas=fabula.paginas||[];
   const perguntas=fabula.perguntas||[];
+  const opcoesFab=(i)=>(fabula.perguntasOpcoes&&Array.isArray(fabula.perguntasOpcoes[i]))?fabula.perguntasOpcoes[i]:[];
+  const textoFab=(i)=>{const m=Array.isArray(respostas["op"+i])?respostas["op"+i]:[];return (m.length?"Marcados: "+m.join("; ")+". ":"")+(respostas[i]||"");};
   const pct=Math.round(((idx+1)/paginas.length)*100);
   const concluido=idx===paginas.length-1;
 
@@ -306,7 +308,7 @@ function FabulaPublica({fabula,user,onConcluido}){
         await db.collection("clinica_reflexoes").add({
           pacienteId:user.id,pacienteNome:user.nome||"",
           origem:"fabula",origemId:fabula.id||"",origemTitulo:fabula.titulo||"",
-          registros:perguntas.map((p,i)=>({pergunta:p,resposta:respostas[i]||""})),
+          registros:perguntas.map((p,i)=>({pergunta:p,resposta:textoFab(i).trim()})),
           data:new Date().toLocaleDateString("pt-BR"),
           createdAt:firebase.firestore.FieldValue.serverTimestamp()
         });
@@ -361,8 +363,22 @@ function FabulaPublica({fabula,user,onConcluido}){
                 <span style={{color:"#a855f7",fontWeight:700,flexShrink:0}}>{i+1}.</span>
                 <span style={{fontSize:14,color:"#374151",lineHeight:1.7,fontFamily:"Inter,sans-serif"}}>{q}</span>
               </div>
+              {opcoesFab(i).length>0&&(
+                <div style={{margin:"4px 0 10px",display:"grid",gap:6}}>
+                  {opcoesFab(i).map(o=>{
+                    const m=Array.isArray(respostas["op"+i])?respostas["op"+i]:[];
+                    return (
+                      <label key={o} style={{display:"flex",gap:8,alignItems:"flex-start",fontSize:13,color:"#374151",fontFamily:"Inter,sans-serif"}}>
+                        <input type="checkbox" style={{marginTop:3}} checked={m.includes(o)}
+                          onChange={e=>setRespostas(r=>{const at=Array.isArray(r["op"+i])?r["op"+i]:[];return {...r,["op"+i]:e.target.checked?[...at,o]:at.filter(x=>x!==o)};})}/>
+                        {o}
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
               <TextAreaVoz value={respostas[i]||""} onChange={e=>setRespostas(r=>({...r,[i]:e.target.value}))}
-                placeholder="Escreva sua reflexão..."
+                placeholder={opcoesFab(i).length?"O que pode acontecer se você continuar ignorando esses avisos?":"Escreva sua reflexão..."}
                 style={{width:"100%",minHeight:64,padding:"8px 10px",borderRadius:8,
                   border:"1px solid #7B00C450",fontSize:13,fontFamily:"Inter,sans-serif",
                   resize:"vertical",lineHeight:1.5,boxSizing:"border-box",outline:"none"}}/>
