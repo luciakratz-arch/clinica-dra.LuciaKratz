@@ -3667,11 +3667,9 @@ function Sidebar({ user, tab, setTab, onLogout, modo, onTrocarModo, notifProps, 
         <a href="../admin/" className="nav-item" style={{color:"rgba(255,255,255,0.85)",background:"rgba(123,0,196,0.25)",borderRadius:8,marginBottom:2,textDecoration:"none"}}>
           <Icon name="settings" size={18}/> Área Administrativa
         </a>
-        {!EM_APP && (
-        <a href="https://luciakratz.com.br" className="nav-item" style={{color:"rgba(255,255,255,0.6)",textDecoration:"none"}}>
+        <a href="https://luciakratz.com.br" target="_blank" rel="noopener noreferrer" className="nav-item" style={{color:"rgba(255,255,255,0.6)",textDecoration:"none"}}>
           <Icon name="arrow-left" size={18}/> Voltar ao site
         </a>
-        )}
         <BotaoInstalarPWA/>
         <button className="nav-item nav-item-danger" onClick={onLogout}>
           <Icon name="log-out" size={18}/> Sair
@@ -3950,7 +3948,7 @@ function Login({ onLogin }) {
             </div>
             <div className="login-footer" style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8}}>
               <span>Plataforma protegida · Dra. Lucia Kratz · CRP 09/20590</span>
-              {!EM_APP && <a href="https://luciakratz.com.br" style={{color:"var(--purple)",fontSize:13}}>← Voltar ao site</a>}
+              <a href="https://luciakratz.com.br" target="_blank" rel="noopener noreferrer" style={{color:"var(--purple)",fontSize:14,fontWeight:600}}>← Voltar ao site</a>
             </div>
           </>
         )}
