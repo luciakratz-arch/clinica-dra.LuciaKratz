@@ -1588,7 +1588,7 @@ function FerramentaRodaVidaIntegral({user}){
       .where("pacienteId","==",user.id)
       .where("tipo","==","roda")
       .get().then(snap=>{
-        const docs=snap.docs.map(d=>d.data()).sort((a,b)=>b.createdAt?.seconds-a.createdAt?.seconds);
+        const docs=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
         if(docs.length>0){
           const ultimo=docs[0];
           const v={};
@@ -1598,9 +1598,11 @@ function FerramentaRodaVidaIntegral({user}){
           });
           setVals(v);
         }
-        setHistorico(docs.slice(0,5));
+        setHistorico(docs.slice(0,60));
       }).catch(()=>{});
   },[user?.id]);
+  // Data e hora do registro (dois registros no mesmo dia não parecem repetidos)
+  const rotuloReg=(h)=>h.createdAt&&h.createdAt.seconds?new Date(h.createdAt.seconds*1000).toLocaleDateString("pt-BR")+" "+new Date(h.createdAt.seconds*1000).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}):h.data;
 
   function RadarSVG({valores, cor}){
     const c=cor||"#7B00C4";
@@ -1648,7 +1650,19 @@ function FerramentaRodaVidaIntegral({user}){
 
   async function salvar(){
     if(!user?.id) return;
+    const iguais=historico[0]&&AREAS.every(a=>{const r=(historico[0].areas||[]).find(x=>x.area===a.label);return (r?r.valor:0)===(vals[a.id]||0);});
+    if(iguais){setMsg("Nada mudou desde o último registro.");setTimeout(()=>setMsg(""),2500);return;}
     try{
+      const ult=historico[0];const agoraSeg=Math.floor(Date.now()/1000);
+      // Mesmo dia e quase na mesma hora (até 2 horas): só ajustou a resposta, então sobrescreve o último registro
+      if(ult&&ult.id&&ult.createdAt&&ult.createdAt.seconds&&agoraSeg-ult.createdAt.seconds<7200&&ult.data===new Date().toLocaleDateString("pt-BR")){
+        const areasN=AREAS.map(a=>({area:a.label,valor:vals[a.id]||0}));
+        await db.collection("clinica_gestao_ansiedade").doc(ult.id).update({areas:areasN,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+        limparRascunho();
+        setHistorico(h=>[{...h[0],areas:areasN,createdAt:{seconds:agoraSeg}},...h.slice(1)]);
+        setMsg("✓ Roda da Vida atualizada!");setTimeout(()=>setMsg(""),2500);
+        return;
+      }
       await db.collection("clinica_gestao_ansiedade").add({
         pacienteId:user.id, pacienteNome:user.nome||"", tipo:"roda",
         areas:AREAS.map(a=>({area:a.label,valor:vals[a.id]||0})),
@@ -1657,6 +1671,7 @@ function FerramentaRodaVidaIntegral({user}){
       });
       registrarUsoRecurso(user,INFO_REC,"salvou",{detalhe:"Roda da Vida ("+AREAS.map(a=>`${a.label}: ${vals[a.id]||0}`).join(", ")+")"});
       limparRascunho();
+      setHistorico(h=>[{areas:AREAS.map(a=>({area:a.label,valor:vals[a.id]||0})),data:new Date().toLocaleDateString("pt-BR"),createdAt:{seconds:Math.floor(Date.now()/1000)}},...h].slice(0,60));
       setMsg("✓ Roda da Vida salva!");setTimeout(()=>setMsg(""),2500);
     }catch(e){setMsg("Erro ao salvar.");}
   }
@@ -1704,11 +1719,11 @@ function FerramentaRodaVidaIntegral({user}){
             <div style={{fontWeight:700,color:"var(--purple)",fontSize:13,marginBottom:14,textAlign:"center"}}>📊 Comparação — Antes × Agora</div>
             <div style={{display:"flex",gap:12,justifyContent:"center",flexWrap:"wrap"}}>
               <div style={{textAlign:"center",flex:"1 1 140px",maxWidth:200}}>
-                <div style={{fontSize:11,fontWeight:700,color:"#6b7280",marginBottom:6,background:"#f3f4f6",borderRadius:20,padding:"3px 10px",display:"inline-block"}}>📅 {anterior.data}</div>
+                <div style={{fontSize:11,fontWeight:700,color:"#6b7280",marginBottom:6,background:"#f3f4f6",borderRadius:20,padding:"3px 10px",display:"inline-block"}}>📅 {rotuloReg(anterior)}</div>
                 <RadarSVG valores={valsAnterior} cor="#a78bfa"/>
               </div>
               <div style={{textAlign:"center",flex:"1 1 140px",maxWidth:200}}>
-                <div style={{fontSize:11,fontWeight:700,color:"var(--purple)",marginBottom:6,background:"#ede9fe",borderRadius:20,padding:"3px 10px",display:"inline-block"}}>📅 {atual.data} (atual)</div>
+                <div style={{fontSize:11,fontWeight:700,color:"var(--purple)",marginBottom:6,background:"#ede9fe",borderRadius:20,padding:"3px 10px",display:"inline-block"}}>📅 {rotuloReg(atual)} (atual)</div>
                 <RadarSVG valores={valsAtual} cor="#7B00C4"/>
               </div>
             </div>
@@ -1735,10 +1750,10 @@ function FerramentaRodaVidaIntegral({user}){
       {/* ── Histórico com datas ── */}
       {historico.length>0&&(
         <div style={{marginTop:16}}>
-          <div style={{fontSize:12,fontWeight:600,color:"var(--purple)",marginBottom:8}}>📅 Histórico de sessões</div>
+          <div style={{fontSize:12,fontWeight:600,color:"var(--purple)",marginBottom:8}}>📅 Histórico completo ({historico.length})</div>
           {historico.map((h,i)=>(
             <div key={i} style={{fontSize:11,color:"#6b7280",padding:"7px 10px",background:i===0?"#f3e8ff":"#f9fafb",borderRadius:8,marginBottom:4,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-              <span style={{fontWeight:i===0?700:400,color:i===0?"var(--purple)":"#6b7280"}}>{h.data}{i===0?" (atual)":""}</span>
+              <span style={{fontWeight:i===0?700:400,color:i===0?"var(--purple)":"#6b7280"}}>{rotuloReg(h)}{i===0?" (atual)":""}</span>
               <span style={{fontSize:10}}>{(h.areas||[]).map(a=>`${a.area[0]}${a.valor}`).join(" ")}</span>
             </div>
           ))}
